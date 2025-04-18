@@ -156,6 +156,7 @@ export class GameUI extends PIXI.Container {
       20
     );
     this.addChild(this.resetButton);
+
   }
   
   /**
@@ -198,6 +199,8 @@ export class GameUI extends PIXI.Container {
    * @param state New game state
    */
   private onGameStateChanged(state: IGameState): void {
+
+    console.log("GameUI: onGameStateChanged called", state);
     this.gameState = state;
     
     // Update UI elements

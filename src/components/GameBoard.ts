@@ -3,7 +3,6 @@ import { Reel, ReelConfig } from './Reel';
 import { Symbol, SymbolInstance } from '../types/symbols';
 import { GameEventType } from '../types/events';
 import { eventManager, publishEvent } from '../utils/event-system';
-import { printBoardToConsole } from '../core/symbols';
 import { detectWinningCombinations, transformBoardSymbolsToMatrix } from '../core/winning-patterns';
 
 /**
@@ -232,6 +231,7 @@ export class GameBoard extends PIXI.Container {
    */
   private detectWins(): void {
     
+    console.log("GameBoard: Detecting wins", this.boardSymbols);
     // // Detect winning combinations
     // const allSymbols = this.reels.map((reel) => reel.getSymbols());
     // printBoardToConsole(transformBoardSymbolsToMatrix(allSymbols));

@@ -206,17 +206,17 @@ export class Reel extends PIXI.Container {
         // Add sprite to container
         container.addChild(sprite);
 
-        const text = new PIXI.Text({
-          text: `${symbolInstance.row}, ${symbolInstance.column}`,
-          style:{
-            fontFamily: 'Arial',
-            fontSize: 12,
-            fill: 0x000000,
-            align: 'center'  
-          }
-        });
-        text.anchor.set(0, 0);
-        container.addChild(text);
+        // const text = new PIXI.Text({
+        //   text: `${symbolInstance.row}, ${symbolInstance.column}`,
+        //   style:{
+        //     fontFamily: 'Arial',
+        //     fontSize: 12,
+        //     fill: 0x000000,
+        //     align: 'center'  
+        //   }
+        // });
+        // text.anchor.set(0, 0);
+        // container.addChild(text);
         
       } else {
         console.error(`Texture not found for symbol ${symbolInstance.symbol.type}: ${texturePath}`);
@@ -414,7 +414,7 @@ export class Reel extends PIXI.Container {
       
       // Calculate new position based on reel position
       symbolContainer.position.y = ((this.reelPosition + i) % this.symbols.length) * symbolHeight - symbolHeight;
-      (symbolContainer.getChildAt(2) as PIXI.Text).text = `${i}) ${symbolContainer.position.y} ${this.symbols[i].row}, ${this.symbols[i].column}`;
+      // (symbolContainer.getChildAt(2) as PIXI.Text).text = `${i}) ${symbolContainer.position.y} ${this.symbols[i].row}, ${this.symbols[i].column}`;
       // Detect if symbol went over the top and needs to be updated
       if (symbolContainer.position.y < 0 && prevY > symbolHeight) {
         // Get a new random symbol

@@ -1,6 +1,6 @@
 import { SymbolInstance, SymbolType } from '../types/symbols';
 import { WinCombinationType, WinningPattern } from '../types/winning-combinations';
-
+import { Win } from '../types/game-state';
 /**
  * Check if all symbols in the given positions match
  * @param board The game board
@@ -197,6 +197,26 @@ export function detectWinningCombinations(board: SymbolInstance[][]) {
   
   return winningCombinations;
 }
+
+export function detectWins(board: SymbolInstance[][]): Win[] {
+  const winningCombinations = detectWinningCombinations(board);
+  const wins: Win[] = winningCombinations.map(({ pattern, symbols }) => {
+
+    const symbolValue = Math.floor(symbols.reduce((acc, symbol) => acc + symbol.symbol.payoutValue, 0) / symbols.length);
+    const baseValue = symbolValue;
+    const totalValue = Math.floor(symbols.reduce((acc, symbol) => acc + (symbol.symbol.payoutValue * pattern.multiplier), 0));
+    return {
+      symbols,
+      combinationType: pattern.type,
+      baseValue,
+      multiplier: pattern.multiplier,
+      totalValue
+    };
+  });
+  
+  return wins;
+}
+
 
 /**
  * Calculate the total payout for all winning combinations

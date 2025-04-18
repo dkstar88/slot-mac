@@ -6,7 +6,7 @@ import { eventManager, publishEvent } from './utils/event-system';
 import { GameEventType } from './types/events';
 import { GameStateType } from './types/game-state';
 import { SYMBOLS_ARRAY } from './core/symbols';
-
+import { detectWins, calculatePayout } from './core/winning-patterns';
 /**
  * Game configuration
  */
@@ -149,6 +149,7 @@ class FruitfulFortune {
     
     // Show welcome message
     this.gameUI.showMessage('Welcome to Fruitful Fortune!', 3000);
+    GameStateManager.resetState(); // Reset game state on initialization
   }
   
   /**
@@ -192,14 +193,15 @@ class FruitfulFortune {
    * @param boardSymbols Symbols on the board
    */
   private onAllReelsStopped(boardSymbols: any[][]): void {
+    console.log("Main: All reels stopped, boardSymbols:", boardSymbols);
     // Create spin result
-    const spinResult = {
+    let spinResult = {
       boardSymbols,
-      wins: [], // This would be populated by the winning combinations detector
+      wins: detectWins(boardSymbols), // This would be populated by the winning combinations detector
       totalPayout: 0, // This would be calculated based on the wins
       isJackpot: false // This would be determined based on the wins
     };
-    
+    spinResult.totalPayout = spinResult.wins.reduce((acc, win) => acc + win.totalValue, 0);
     // End spin
     GameStateManager.endSpin(spinResult);
   }
