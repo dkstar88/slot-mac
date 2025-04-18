@@ -96,6 +96,6 @@ export function publishEvent<T extends GameEvent>(
     timestamp: Date.now(),
     ...eventData
   } as T;
-  
+  console.log("Publishing event:", event);
   eventManager.publish(event);
 }

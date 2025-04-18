@@ -2,8 +2,8 @@ import * as PIXI from 'pixi.js';
 import { SpinButton } from './SpinButton';
 import { GameEventType } from '../types/events';
 import { eventManager, publishEvent } from '../utils/event-system';
-import { GameState, GameStateType } from '../types/game-state';
-import { gameStateManager } from '../state/game-state-manager';
+import { IGameState } from '../types/game-state';
+import { GameStateManager } from '../state/game-state-manager';
 
 /**
  * Configuration for the game UI
@@ -74,7 +74,7 @@ export class GameUI extends PIXI.Container {
   private winAmountDisplay!: PIXI.Text;
   
   /** Current game state */
-  private gameState: GameState | null = null;
+  private gameState: IGameState | null = null;
   
   /** Message timeout ID */
   private messageTimeoutId: number | null = null;
@@ -100,11 +100,12 @@ export class GameUI extends PIXI.Container {
    */
   private initUI(): void {
     // Create coin display
-    this.coinDisplay = new PIXI.Text('Coins: 0', {
+    this.coinDisplay = new PIXI.Text({
+      text: 'Coins: 0',
       fontFamily: this.config.fontFamily,
       fontSize: this.config.valueFontSize,
       fill: this.config.textColor
-    });
+    } as PIXI.TextOptions);
     this.coinDisplay.position.set(20, 20);
     this.addChild(this.coinDisplay);
     
@@ -178,7 +179,7 @@ export class GameUI extends PIXI.Container {
     
     // Subscribe to payout calculated event
     eventManager.subscribe(GameEventType.PAYOUT_CALCULATED, (event: any) => {
-      this.onPayoutCalculated(event.amount, event.multiplier);
+      this.onPayoutCalculated(event.amount);
     });
     
     // Subscribe to celebration started event
@@ -196,7 +197,7 @@ export class GameUI extends PIXI.Container {
    * Handle game state changed event
    * @param state New game state
    */
-  private onGameStateChanged(state: GameState): void {
+  private onGameStateChanged(state: IGameState): void {
     this.gameState = state;
     
     // Update UI elements
@@ -227,7 +228,7 @@ export class GameUI extends PIXI.Container {
    * @param amount Payout amount
    * @param multiplier Multiplier applied
    */
-  private onPayoutCalculated(amount: number, multiplier: number): void {
+  private onPayoutCalculated(amount: number): void {
     if (amount > 0) {
       this.showWinAmount(amount);
       this.showMessage(`You won ${amount} coins!`);
@@ -344,7 +345,7 @@ export class GameUI extends PIXI.Container {
    */
   private createResetButton(): PIXI.Container {
     const container = new PIXI.Container();
-    
+    container.setSize(80, 30);
     // Create background
     const background = new PIXI.Graphics()
       .roundRect(0, 0, 80, 30, 5)
@@ -352,12 +353,15 @@ export class GameUI extends PIXI.Container {
     container.addChild(background);
     
     // Create text
-    const text = new PIXI.Text('RESET', {
-      fontFamily: 'Arial',
-      fontSize: 16,
-      fill: 0xffffff,
+    const text = new PIXI.Text({
+      text: 'RESET',
+      style: {
+        fontFamily: this.config.fontFamily,
+        fontSize: this.config.labelFontSize,
+        fill: 0xffffff,
+      },
       align: 'center'
-    });
+    } as PIXI.TextOptions);
     text.anchor.set(0.5);
     text.position.set(40, 15);
     container.addChild(text);
@@ -396,8 +400,8 @@ export class GameUI extends PIXI.Container {
    */
   private onResetButtonClicked(): void {
     console.log("Reset button clicked");
-    gameStateManager.resetToIdle();
-    this.showMessage("Game state reset to IDLE", 2000);
+    GameStateManager.resetState();
+    this.showMessage('Game Restart!');
   }
   
   /**

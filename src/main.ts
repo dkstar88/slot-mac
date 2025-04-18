@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { GameBoard } from './components/GameBoard';
 import { GameUI } from './components/GameUI';
-import { gameStateManager } from './state/game-state-manager';
+import { GameStateManager } from './state/game-state-manager';
 import { eventManager, publishEvent } from './utils/event-system';
 import { GameEventType } from './types/events';
 import { GameStateType } from './types/game-state';
@@ -32,7 +32,7 @@ class FruitfulFortune {
   private gameUI!: GameUI;
   
   // Assets loaded flag
-  private assetsLoaded: boolean = false;
+  // private assetsLoaded: boolean = false;
   
   /**
    * Constructor
@@ -103,7 +103,7 @@ class FruitfulFortune {
           console.warn('Some assets failed to load. The game will use fallback graphics for these.');
         }
         
-        this.assetsLoaded = true;
+        // this.assetsLoaded = true;
         this.initGame();
         
         // Hide loading screen
@@ -142,7 +142,7 @@ class FruitfulFortune {
     
     // Add keyboard controls
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && gameStateManager.getState().currentState === GameStateType.IDLE) {
+      if (e.code === 'Space' && GameStateManager.getState().currentState === GameStateType.IDLE) {
         publishEvent(GameEventType.SPIN_BUTTON_CLICKED, {});
       }
     });
@@ -173,14 +173,14 @@ class FruitfulFortune {
     console.log("Main: onSpinButtonClicked called");
     
     // Check if can spin
-    const gameState = gameStateManager.getState();
+    const gameState = GameStateManager.getState();
     if (gameState.currentState !== GameStateType.IDLE || !gameState.canSpin) {
       console.log("Main: Cannot spin, gameState:", gameState.currentState, "canSpin:", gameState.canSpin);
       return;
     }
     
     // Start spin
-    gameStateManager.startSpin();
+    GameStateManager.startSpin();
     
     // Start spinning the reels
     console.log("Main: Starting to spin reels");
@@ -201,7 +201,7 @@ class FruitfulFortune {
     };
     
     // End spin
-    gameStateManager.endSpin(spinResult);
+    GameStateManager.endSpin(spinResult);
   }
 }
 

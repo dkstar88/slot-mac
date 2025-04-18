@@ -1,17 +1,17 @@
 import { 
-  GameState, 
-  GameStateManager, 
+  IGameState, 
+  IGameStateManager, 
   GameStateType, 
   PlayerStats, 
   SpinResult 
 } from '../types/game-state';
-import { eventManager, publishEvent } from '../utils/event-system';
+import { publishEvent } from '../utils/event-system';
 import { GameEventType } from '../types/events';
 
 /**
  * Default game state
  */
-const DEFAULT_GAME_STATE: GameState = {
+const DEFAULT_GAME_STATE: IGameState = {
   currentState: GameStateType.IDLE,
   playerStats: {
     coins: 100,
@@ -33,9 +33,9 @@ const MAX_RECENT_SPINS = 10;
 /**
  * Implementation of the game state manager
  */
-export class GameStateManagerImpl implements GameStateManager {
+export class GameStateManagerImpl implements IGameStateManager {
   // Current game state
-  private state: GameState;
+  private state: IGameState;
   
   /**
    * Constructor
@@ -43,7 +43,7 @@ export class GameStateManagerImpl implements GameStateManager {
   constructor() {
     // Initialize with default state or load from storage
     this.state = this.loadStateFromStorage() || { ...DEFAULT_GAME_STATE };
-    
+    console.debug("GameStateManager initialized with state:", this.state);
     // Always reset to IDLE state on startup
     this.resetToIdle();
   }
@@ -52,7 +52,7 @@ export class GameStateManagerImpl implements GameStateManager {
    * Get the current game state
    * @returns Current game state
    */
-  getState(): GameState {
+  getState(): IGameState {
     return { ...this.state };
   }
   
@@ -60,7 +60,7 @@ export class GameStateManagerImpl implements GameStateManager {
    * Update the game state
    * @param newState Partial state to update
    */
-  setState(newState: Partial<GameState>): void {
+  setState(newState: Partial<IGameState>): void {
     // Update the state
     this.state = {
       ...this.state,
@@ -202,7 +202,7 @@ export class GameStateManagerImpl implements GameStateManager {
    */
   addCoins(amount: number): void {
     if (amount <= 0) return;
-    
+    console.info("Adding coins:", amount);
     const updatedStats: PlayerStats = {
       ...this.state.playerStats,
       coins: this.state.playerStats.coins + amount
@@ -332,12 +332,12 @@ export class GameStateManagerImpl implements GameStateManager {
    * @private
    * @returns Loaded game state or null if not found
    */
-  private loadStateFromStorage(): GameState | null {
+  private loadStateFromStorage(): IGameState | null {
     try {
       const savedState = localStorage.getItem('fruitfulFortune_gameState');
       
       if (savedState) {
-        return JSON.parse(savedState) as GameState;
+        return JSON.parse(savedState) as IGameState;
       }
     } catch (error) {
       console.error('Failed to load game state from localStorage:', error);
@@ -348,4 +348,4 @@ export class GameStateManagerImpl implements GameStateManager {
 }
 
 // Create a singleton instance of the game state manager
-export const gameStateManager = new GameStateManagerImpl();
+export const GameStateManager = new GameStateManagerImpl();

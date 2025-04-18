@@ -3,8 +3,8 @@ import { Reel, ReelConfig } from './Reel';
 import { Symbol, SymbolInstance } from '../types/symbols';
 import { GameEventType } from '../types/events';
 import { eventManager, publishEvent } from '../utils/event-system';
-import { SYMBOLS_ARRAY } from '../core/symbols';
-import { detectWinningCombinations } from '../core/winning-patterns';
+import { printBoardToConsole } from '../core/symbols';
+import { detectWinningCombinations, transformBoardSymbolsToMatrix } from '../core/winning-patterns';
 
 /**
  * Configuration for the game board
@@ -138,6 +138,11 @@ export class GameBoard extends PIXI.Container {
     
     // Initialize board symbols
     this.updateBoardSymbols();
+
+    // Detect winning combinations
+    // const allSymbols = this.reels.map((reel) => reel.getSymbols());
+    // printBoardToConsole(transformBoardSymbolsToMatrix(allSymbols));
+
   }
   
   /**
@@ -226,10 +231,14 @@ export class GameBoard extends PIXI.Container {
    * Detect winning combinations
    */
   private detectWins(): void {
-    // Convert board symbols to the format expected by the winning patterns detector
-    const board = this.boardSymbols;
     
-    // Detect winning combinations
+    // // Detect winning combinations
+    // const allSymbols = this.reels.map((reel) => reel.getSymbols());
+    // printBoardToConsole(transformBoardSymbolsToMatrix(allSymbols));
+    // console.log("GameBoard: Detecting wins", this.boardSymbols);
+    const board = transformBoardSymbolsToMatrix(this.boardSymbols);
+    // printBoardToConsole(board);    
+    // console.log("GameBoard: ", board);    
     const winningCombinations = detectWinningCombinations(board);
     
     // If there are winning combinations, highlight them
@@ -239,7 +248,7 @@ export class GameBoard extends PIXI.Container {
       
       for (const { symbols } of winningCombinations) {
         winningSymbols.push(...symbols);
-        console.log("GameBoard: Winning symbols detected", symbols);
+        // console.log("GameBoard: Winning symbols detected", symbols);
         // Publish win detected event
         publishEvent(GameEventType.WIN_DETECTED, {
           pattern: { type: 'win' } as any, // This would be the actual pattern type
@@ -330,25 +339,5 @@ export class GameBoard extends PIXI.Container {
     return this.isSpinning;
   }
   
-  /**
-   * Generate a random set of symbols for the board
-   * @returns 2D array of symbols
-   */
-  public static generateRandomSymbols(rows: number, columns: number): Symbol[][] {
-    const symbols: Symbol[][] = [];
-    
-    for (let col = 0; col < columns; col++) {
-      const columnSymbols: Symbol[] = [];
-      
-      for (let row = 0; row < rows; row++) {
-        // Select a random symbol
-        const randomIndex = Math.floor(Math.random() * SYMBOLS_ARRAY.length);
-        columnSymbols.push(SYMBOLS_ARRAY[randomIndex]);
-      }
-      
-      symbols.push(columnSymbols);
-    }
-    
-    return symbols;
-  }
+
 }

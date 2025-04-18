@@ -1,4 +1,4 @@
-import { SymbolInstance } from '../types/symbols';
+import { SymbolInstance, SymbolType } from '../types/symbols';
 import { WinCombinationType, WinningPattern } from '../types/winning-combinations';
 
 /**
@@ -19,32 +19,40 @@ import { WinCombinationType, WinningPattern } from '../types/winning-combination
  *                      [1, 0, 0]]
  * 
  */
-function* checkSymbolsMatch(board: SymbolInstance[][], patternMatrix: number[][]): IterableIterator<SymbolInstance[]>
+
+export function* sliceArray<T>(array: T[][], x: number, y: number): IterableIterator<T[][]> {
+  for (let i = 0; i < array.length - x + 1; i++) {
+    for (let j = 0; j < array[i].length - y + 1; j++) {
+      yield array.slice(i, i + x).map(row => row.slice(j, j + y));
+    }
+  }
+}
+
+export function* checkSymbolsMatch(board: SymbolInstance[][], patternMatrix: number[][]): IterableIterator<SymbolInstance[]>
 {
 
-  // Convert board to 2d matrix of symbols
-  const board2d = board.map(row => row.map(symbol => symbol));
+  // // Convert board to 2d matrix of symbols
+  // const board2d = board.map(row => row.map(symbol => symbol));
 
   // Slice board2d to all possible that can match the patternMatrix
-  for (let i = 0; i < board2d.length - patternMatrix.length + 1; i++) {
-    for (let j = 0; j < board2d[0].length - patternMatrix[0].length + 1; j++) {
-      const slicedBoard = board2d.slice(i, i + patternMatrix.length).map(row => row.slice(j, j + patternMatrix[0].length));
-      const firstSymbol = board[patternMatrix[0][0]][patternMatrix[0][1]].symbol;
-      const matchingSymbols: SymbolInstance[] = [];
-      var isMatch = true;
-      for (const [row, col] of patternMatrix) {
-        const pattern = patternMatrix[row][col];
-        const symbol = slicedBoard[row][col];
-        if (pattern === 0) continue; // Skip empty positions
-        if (symbol.symbol !== firstSymbol) {
-          isMatch = false;
-          break;
+  for (const sliced of sliceArray(board, patternMatrix.length, patternMatrix[0].length)) {
+    let firstSymbol: SymbolType | null = null;
+    const matchingSymbols: SymbolInstance[] = [];
+    var isMatch = true;
+    sliced.forEach((row, rowIndex) => {
+      row.forEach((symbol, colIndex) => {
+        if (patternMatrix[rowIndex][colIndex] === 1) {
+          if (firstSymbol === null) {
+            firstSymbol = symbol.symbol.type;
+          } else if (symbol.symbol.type !== firstSymbol) {
+            isMatch = false;
+          }
+          matchingSymbols.push(symbol);
         }
-        matchingSymbols.push(symbol);
-      }
-      if (isMatch) {
-        yield matchingSymbols;
-      }
+      });
+    });
+    if (isMatch) {
+      yield matchingSymbols;
     }
   }
 
@@ -144,6 +152,25 @@ export const WINNING_PATTERNS: WinningPattern[] = [
     ])
   }
 ];
+
+/** 
+ * Transform board symbols to proper 2d matrix based on row, column of symbol
+ *
+ */
+export function transformBoardSymbolsToMatrix(board: SymbolInstance[][]): SymbolInstance[][] {
+  const matrix: SymbolInstance[][] = [];
+  
+  for (let i = 0; i < board[0].length; i++) {
+    const row: SymbolInstance[] = new Array<SymbolInstance>(board.length);
+    for (let j = 0; j < board.length; j++) {
+      const symbol = board[j][i];
+      row[j] = symbol;
+    }
+    matrix.push(row);
+  }
+
+  return matrix;
+}
 
 /**
  * Detect all winning combinations on the board

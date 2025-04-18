@@ -11,6 +11,8 @@ export enum SymbolType {
   CHERRY = 'cherry'
 }
 
+
+
 /**
  * Interface representing a symbol in the slot machine
  */
@@ -20,6 +22,7 @@ export interface Symbol {
   
   /** Display name of the symbol */
   name: string;
+  emoji: string;
   
   /** Path to the symbol's texture */
   texturePath: string;

@@ -2,7 +2,6 @@ import * as PIXI from 'pixi.js';
 import { GameEventType } from '../types/events';
 import { publishEvent } from '../utils/event-system';
 import { GameStateType } from '../types/game-state';
-import { gameStateManager } from '../state/game-state-manager';
 
 /**
  * Configuration for the spin button

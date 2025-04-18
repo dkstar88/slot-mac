@@ -87,7 +87,7 @@ export class Reel extends PIXI.Container {
   private reelIndex: number;
   
   /** Extra symbols to add above and below the visible area */
-  private extraSymbols: number = 2;
+  private extraSymbols: number = 5;
   
   /** Tweening objects for animation */
   private tweening: any[] = [];
@@ -170,7 +170,7 @@ export class Reel extends PIXI.Container {
   private createSymbolContainer(symbolInstance: SymbolInstance): PIXI.Container {
     // Create container
     const container = new PIXI.Container();
-    container.label = `symbol-${symbolInstance.symbol.type}`;
+    // container.label = `symbol-${symbolInstance.symbol.type}`;
     
     // Create background
     const background = new PIXI.Graphics();
@@ -205,14 +205,25 @@ export class Reel extends PIXI.Container {
         
         // Add sprite to container
         container.addChild(sprite);
+
+        const text = new PIXI.Text({
+          text: `${symbolInstance.row}, ${symbolInstance.column}`,
+          style:{
+            fontFamily: 'Arial',
+            fontSize: 12,
+            fill: 0x000000,
+            align: 'center'  
+          }
+        });
+        text.anchor.set(0, 0);
+        container.addChild(text);
         
-        console.log(`Created sprite for symbol ${symbolInstance.symbol.type} with texture ${texturePath}`);
       } else {
         console.error(`Texture not found for symbol ${symbolInstance.symbol.type}: ${texturePath}`);
         this.createFallbackSymbol(container, symbolInstance);
       }
     } catch (error) {
-      console.error(`Error creating sprite for symbol ${symbolInstance.symbol.type}:`, error);
+      console.error(`Error creating sprite for symbol ${symbolInstance.symbol}:`, error);
       this.createFallbackSymbol(container, symbolInstance);
     }
     
@@ -238,6 +249,7 @@ export class Reel extends PIXI.Container {
       fill: 0x000000,
       align: 'center'
     });
+    text.label = 'text';
     text.anchor.set(0.5);
     text.position.set(this.config.symbolSize / 2, this.config.symbolSize / 2);
     container.addChild(text);
@@ -294,14 +306,14 @@ export class Reel extends PIXI.Container {
     const target = this.reelPosition + 10 + this.reelIndex * 5 + extra;
     
     // Calculate spin duration with some variety
-    const time = 2500 + this.reelIndex * 600 + extra * 600;
+    const time = 1500 + this.reelIndex * 600 + extra * 600;
        
     // Start the tween animation
     this.tweenTo(
       'reelPosition',
       target,
       time,
-      this.backout(0.5),
+      this.backout(0.2),
       undefined,
       this.onSpinComplete.bind(this)
     );
@@ -312,12 +324,13 @@ export class Reel extends PIXI.Container {
    * @param targetSymbols Symbols to show when the reel stops
    */
   public stopSpin(targetSymbols?: Symbol[]): void {
+
     if (!this.isSpinning) return;
     
-    // If target symbols are provided, update the symbols
+    // // If target symbols are provided, update the symbols
     if (targetSymbols && targetSymbols.length === this.config.visibleSymbols) {
       // Calculate the position where the reel should stop
-      const symbolHeight = this.config.symbolSize + this.config.symbolSpacing;
+      // const symbolHeight = this.config.symbolSize + this.config.symbolSpacing;
       
       // Update the symbols that will be visible when the reel stops
       for (let i = 0; i < this.config.visibleSymbols; i++) {
@@ -401,14 +414,14 @@ export class Reel extends PIXI.Container {
       
       // Calculate new position based on reel position
       symbolContainer.position.y = ((this.reelPosition + i) % this.symbols.length) * symbolHeight - symbolHeight;
-      
+      (symbolContainer.getChildAt(2) as PIXI.Text).text = `${i}) ${symbolContainer.position.y} ${this.symbols[i].row}, ${this.symbols[i].column}`;
       // Detect if symbol went over the top and needs to be updated
       if (symbolContainer.position.y < 0 && prevY > symbolHeight) {
         // Get a new random symbol
         const symbol = getRandomSymbol();
         
         // Update the symbol instance
-        this.symbols[i] = createSymbolInstance(symbol, i % this.config.visibleSymbols, this.reelIndex);
+        this.symbols[i] = createSymbolInstance(symbol, this.symbols[i].row, this.reelIndex);
         
         // Update the symbol container
         symbolContainer.removeChildren();
@@ -422,6 +435,7 @@ export class Reel extends PIXI.Container {
         // Replace old container with new one
         this.symbolsContainer.removeChildAt(i);
         this.symbolsContainer.addChildAt(newSymbolContainer, i);
+
       }
     }
     
@@ -570,12 +584,33 @@ export class Reel extends PIXI.Container {
     return (t: number) => --t * t * ((amount + 1) * t + amount) + 1;
   }
   
+  public getSymbols(): SymbolInstance[] {
+    return this.symbols;
+  }
   /**
    * Get the visible symbols
    * @returns Array of visible symbols
    */
   public getVisibleSymbols(): SymbolInstance[] {
-    return this.symbols.slice(this.extraSymbols, this.extraSymbols + this.config.visibleSymbols);
+    // Get Visible symbols visually container.y >= 200 && container.y <= 400
+
+    var result: SymbolInstance[] = new Array<SymbolInstance>(this.config.visibleSymbols);
+    const symbolHeight = this.config.symbolSize + this.config.symbolSpacing;
+    const topY = this.extraSymbols * symbolHeight;
+    const btmY = (this.config.visibleSymbols+this.extraSymbols) * symbolHeight;
+    
+    for (let i = 0; i < this.symbols.length; i++) {
+      const symbolContainer = this.symbolsContainer.children[i] as PIXI.Container;
+      if (symbolContainer.position.y >= topY && symbolContainer.position.y < btmY) {        
+        // Get a new random symbol
+        result[Math.floor(symbolContainer.position.y/symbolHeight)-this.extraSymbols] = this.symbols[i];
+      }
+    }
+
+
+    // const result = this.symbols.slice(this.extraSymbols, this.extraSymbols + this.config.visibleSymbols);
+    // console.info('Visible symbols:', result.map(s => [s.symbol.emoji, s.row, s.column]));
+    return result;
   }
   
   /**
@@ -616,18 +651,15 @@ export class Reel extends PIXI.Container {
    * @param winningSymbols Array of winning symbols
    */
   public highlightWinningSymbols(winningSymbols: SymbolInstance[]): void {
-    // Get visible symbols
-    const visibleSymbols = this.getVisibleSymbols();
     
     // Check each visible symbol
-    for (let i = 0; i < visibleSymbols.length; i++) {
-      const symbolIndex = this.extraSymbols + i;
-      const symbolContainer = this.symbolsContainer.children[symbolIndex] as PIXI.Container;
+    for (let i = 0; i < this.symbols.length; i++) {
+      const symbolContainer = this.symbolsContainer.children[i] as PIXI.Container;
       
       // Check if this symbol is in the winning symbols
       const isWinning = winningSymbols.some(winningSymbol => 
-        winningSymbol.row === visibleSymbols[i].row && 
-        winningSymbol.column === visibleSymbols[i].column
+        winningSymbol.row === this.symbols[i].row && 
+        winningSymbol.column === this.symbols[i].column
       );
       
       // Highlight if winning

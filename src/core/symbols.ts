@@ -1,4 +1,4 @@
-import { Symbol, SymbolType } from '../types/symbols';
+import { Symbol, SymbolInstance, SymbolType } from '../types/symbols';
 
 /**
  * Definitions for all symbols in the game
@@ -7,6 +7,7 @@ export const SYMBOLS: Record<SymbolType, Symbol> = {
   [SymbolType.SEVEN]: {
     type: SymbolType.SEVEN,
     name: 'Seven',
+    emoji: '7️⃣',
     texturePath: 'assets/symbols/seven.png',
     payoutValue: 100,
     rarityWeight: 1 // Rarest
@@ -14,12 +15,14 @@ export const SYMBOLS: Record<SymbolType, Symbol> = {
   [SymbolType.BAR]: {
     type: SymbolType.BAR,
     name: 'Bar',
+    emoji: '🍫',
     texturePath: 'assets/symbols/bar.png',
     payoutValue: 50,
     rarityWeight: 2
   },
   [SymbolType.BELL]: {
     type: SymbolType.BELL,
+    emoji: '🔔',
     name: 'Bell',
     texturePath: 'assets/symbols/bell.png',
     payoutValue: 30,
@@ -27,6 +30,7 @@ export const SYMBOLS: Record<SymbolType, Symbol> = {
   },
   [SymbolType.WATERMELON]: {
     type: SymbolType.WATERMELON,
+    emoji: '🍉',
     name: 'Watermelon',
     texturePath: 'assets/symbols/watermelon.png',
     payoutValue: 20,
@@ -35,6 +39,7 @@ export const SYMBOLS: Record<SymbolType, Symbol> = {
   [SymbolType.ORANGE]: {
     type: SymbolType.ORANGE,
     name: 'Orange',
+    emoji: '🍊',
     texturePath: 'assets/symbols/orange.png',
     payoutValue: 15,
     rarityWeight: 5
@@ -42,6 +47,7 @@ export const SYMBOLS: Record<SymbolType, Symbol> = {
   [SymbolType.LEMON]: {
     type: SymbolType.LEMON,
     name: 'Lemon',
+    emoji: '🍋',
     texturePath: 'assets/symbols/lemon.png',
     payoutValue: 10,
     rarityWeight: 6
@@ -49,6 +55,7 @@ export const SYMBOLS: Record<SymbolType, Symbol> = {
   [SymbolType.CHERRY]: {
     type: SymbolType.CHERRY,
     name: 'Cherry',
+    emoji: '🍒',
     texturePath: 'assets/symbols/cherry.png',
     payoutValue: 5,
     rarityWeight: 7 // Most common
@@ -119,4 +126,20 @@ export function createSymbolInstance(symbol: Symbol, row: number, column: number
     isWinning: false,
     winningMultiplier: 1
   };
+}
+
+export function createSymbolInstanceFromType(symbol: SymbolType, row: number, column: number) {
+  return {
+    symbol: SYMBOLS[symbol],
+    row,
+    column,
+    isWinning: false,
+    winningMultiplier: 1
+  };
+}
+
+export function printBoardToConsole(board: SymbolInstance[][]): void {
+  board.forEach(row => {
+    console.log(row.map(symbol => symbol.symbol.emoji).join(' | '));
+  });
 }

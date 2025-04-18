@@ -67,7 +67,7 @@ export interface SpinResult {
 /**
  * Interface representing the game's current state
  */
-export interface GameState {
+export interface IGameState {
   /** Current state of the game */
   currentState: GameStateType;
   
@@ -90,12 +90,12 @@ export interface GameState {
 /**
  * Interface for game state manager
  */
-export interface GameStateManager {
+export interface IGameStateManager {
   /** Get the current game state */
-  getState(): GameState;
+  getState(): IGameState;
   
   /** Update the game state */
-  setState(newState: Partial<GameState>): void;
+  setState(newState: Partial<IGameState>): void;
   
   /** Start a new spin */
   startSpin(): void;
