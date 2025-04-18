@@ -177,111 +177,23 @@ export class Reel extends PIXI.Container {
     background.rect(0, 0, this.config.symbolSize, this.config.symbolSize).fill(0xffffff);
     container.addChild(background);
     
-    // Create symbol sprite using the loaded texture
-    try {
-      // Get the texture from the PIXI.Assets cache
-      const texturePath = symbolInstance.symbol.texturePath;
-      const texture = PIXI.Assets.get(texturePath);
-      
-      if (texture) {
-        // Create sprite with the texture
-        const sprite = new PIXI.Sprite(texture);
-        
-        // Scale the sprite to fit within the symbol size
-        const padding = 10;
-        const maxSize = this.config.symbolSize - (padding * 2);
-        
-        // Calculate scale to fit within the maxSize while maintaining aspect ratio
-        const scale = Math.min(
-          maxSize / sprite.width,
-          maxSize / sprite.height
-        );
-        
-        sprite.scale.set(scale, scale);
-        
-        // Center the sprite in the container
-        sprite.anchor.set(0.5);
-        sprite.position.set(this.config.symbolSize / 2, this.config.symbolSize / 2);
-        
-        // Add sprite to container
-        container.addChild(sprite);
-
-        // const text = new PIXI.Text({
-        //   text: `${symbolInstance.row}, ${symbolInstance.column}`,
-        //   style:{
-        //     fontFamily: 'Arial',
-        //     fontSize: 12,
-        //     fill: 0x000000,
-        //     align: 'center'  
-        //   }
-        // });
-        // text.anchor.set(0, 0);
-        // container.addChild(text);
-        
-      } else {
-        console.error(`Texture not found for symbol ${symbolInstance.symbol.type}: ${texturePath}`);
-        this.createFallbackSymbol(container, symbolInstance);
+    // Create symbol
+    const text = new PIXI.Text({
+      text: symbolInstance.symbol.emoji,
+      style:{
+        fontFamily: 'Arial',
+        fontSize: this.config.symbolSize * 0.7,
+        fill: 0x000000,
+        align: 'center'  
       }
-    } catch (error) {
-      console.error(`Error creating sprite for symbol ${symbolInstance.symbol}:`, error);
-      this.createFallbackSymbol(container, symbolInstance);
-    }
+    });
+    text.anchor.set(0, 0);
+    container.addChild(text);
+        
     
     return container;
   }
-  
-  /**
-   * Create a fallback symbol when texture loading fails
-   * @param container The container to add the fallback to
-   * @param symbolInstance The symbol instance
-   */
-  private createFallbackSymbol(container: PIXI.Container, symbolInstance: SymbolInstance): void {
-    // Create symbol placeholder as fallback
-    const symbolGraphic = new PIXI.Graphics();
-    const color = this.getColorForSymbol(symbolInstance.symbol);
-    symbolGraphic.rect(10, 10, this.config.symbolSize - 20, this.config.symbolSize - 20).fill(color);
-    container.addChild(symbolGraphic);
-    
-    // Add symbol name text
-    const text = new PIXI.Text(symbolInstance.symbol.name, {
-      fontFamily: 'Arial',
-      fontSize: 14,
-      fill: 0x000000,
-      align: 'center'
-    });
-    text.label = 'text';
-    text.anchor.set(0.5);
-    text.position.set(this.config.symbolSize / 2, this.config.symbolSize / 2);
-    container.addChild(text);
-  }
-  
-  /**
-   * Get a color for a symbol
-   * @param symbol Symbol
-   * @returns Color for the symbol
-   */
-  private getColorForSymbol(symbol: Symbol): number {
-    // In a real implementation, you would use the symbol's texture
-    // For now, we'll use a different color for each symbol type
-    switch (symbol.type) {
-      case 'seven':
-        return 0xff0000; // Red
-      case 'bar':
-        return 0x0000ff; // Blue
-      case 'bell':
-        return 0xffff00; // Yellow
-      case 'watermelon':
-        return 0x00ff00; // Green
-      case 'orange':
-        return 0xffa500; // Orange
-      case 'lemon':
-        return 0xffff00; // Yellow
-      case 'cherry':
-        return 0xff0000; // Red
-      default:
-        return 0xcccccc; // Gray
-    }
-  }
+
   
   /**
    * Start spinning the reel

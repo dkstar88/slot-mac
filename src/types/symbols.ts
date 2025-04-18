@@ -2,9 +2,9 @@
  * Enum representing the different symbol types in the game
  */
 export enum SymbolType {
-  SEVEN = 'seven',
-  BAR = 'bar',
-  BELL = 'bell',
+  PINEAPPLE = 'pineapple',
+  GRAPE = 'grape',
+  STRAWBERRY = 'strawberry',
   WATERMELON = 'watermelon',
   ORANGE = 'orange',
   LEMON = 'lemon',
@@ -24,9 +24,7 @@ export interface Symbol {
   name: string;
   emoji: string;
   
-  /** Path to the symbol's texture */
-  texturePath: string;
-  
+ 
   /** Base payout value for this symbol */
   payoutValue: number;
   

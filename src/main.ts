@@ -7,6 +7,7 @@ import { GameEventType } from './types/events';
 import { GameStateType } from './types/game-state';
 import { SYMBOLS_ARRAY } from './core/symbols';
 import { detectWins, calculatePayout } from './core/winning-patterns';
+
 /**
  * Game configuration
  */
@@ -61,63 +62,78 @@ class FruitfulFortune {
       console.error('Could not find pixi-container element');
       document.body.appendChild(canvas);
     }
-    
+
     // Load assets
-    this.loadAssets();
+    this.initGame();
   }
   
   /**
    * Load game assets
    */
-  private loadAssets(): void {
-    // Create a loader
-    const loader = PIXI.Assets;
-    
-    // Add symbol textures to load
-    const symbolsTexturePath = SYMBOLS_ARRAY.map(symbol => symbol.texturePath);
-    
-    console.log('Loading symbol textures:', symbolsTexturePath);
-    
-    // Create a promise for each texture to load
-    const loadPromises = symbolsTexturePath.map(path => {
-      return loader.load(path)
-        .then(texture => {
-          console.log(`Successfully loaded texture: ${path}`);
-          return { path, texture, success: true };
-        })
-        .catch(error => {
-          console.error(`Failed to load texture: ${path}`, error);
-          return { path, error, success: false };
-        });
-    });
-    
-    // Wait for all textures to load (or fail)
-    Promise.all(loadPromises)
-      .then(results => {
-        const successCount = results.filter(r => r.success).length;
-        const failCount = results.length - successCount;
+  // private loadAssets(): void {
+  //   // Create a loader
+  //   const loader = PIXI.Assets;
         
-        console.log(`Asset loading complete. Success: ${successCount}, Failed: ${failCount}`);
+  //   // Add symbol textures to load
+  //   const symbolsAssets = []
+    
+  //   console.log('Loading symbol textures:', symbolsAssets);
+    
+  //   // Create a promise for each texture to load
+  //   const loadPromises = symbolsAssets.map(asset => {
+  //     return loader.load(asset)
+  //       .then(texture => {
+  //         console.log(`Successfully loaded texture: ${asset.src}`);
+  //         return { asset, texture, success: true };
+  //       })
+  //       .catch(error => {
+  //         console.error(`Failed to load texture: ${asset.src}`, error);
+  //         return { asset, error, success: false };
+  //       });
+  //   });
+    
+  //   // Wait for all textures to load (or fail)
+  //   Promise.all(loadPromises)
+  //     .then(results => {
         
-        if (failCount > 0) {
-          console.warn('Some assets failed to load. The game will use fallback graphics for these.');
-        }
+
+  //       const successCount = results.filter(r => r.success).length;
+  //       const failCount = results.length - successCount;
         
-        // this.assetsLoaded = true;
-        this.initGame();
+  //       console.log(`Asset loading complete. Success: ${successCount}, Failed: ${failCount}`);
         
-        // Hide loading screen
-        const loadingScreen = document.getElementById('loading-screen');
-        if (loadingScreen) {
-          loadingScreen.style.display = 'none';
-        }
-      });
-  }
+  //       if (failCount > 0) {
+  //         console.warn('Some assets failed to load. The game will use fallback graphics for these.');
+  //       }
+        
+  //       // this.assetsLoaded = true;
+  //       this.initGame();
+        
+  //       // Hide loading screen
+  //       const loadingScreen = document.getElementById('loading-screen');
+  //       if (loadingScreen) {
+  //         loadingScreen.style.display = 'none';
+  //       }
+  //     });
+  // }
   
+
+  private hideLoadingScreen(): void {
+      // Hide loading screen
+      const loadingScreen = document.getElementById('loading-screen');
+      if (loadingScreen) {
+        loadingScreen.style.display = 'none';
+      }
+  }
+
   /**
    * Initialize the game
    */
   private initGame(): void {
+
+
+    this.hideLoadingScreen();
+
     // Create game board
     this.gameBoard = new GameBoard({
       width: CONFIG.width,

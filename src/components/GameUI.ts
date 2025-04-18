@@ -1,5 +1,8 @@
 import * as PIXI from 'pixi.js';
 import { SpinButton } from './SpinButton';
+import { SYMBOLS_ARRAY } from '../core/symbols';
+import { Symbol } from '../types/symbols';
+
 import { GameEventType } from '../types/events';
 import { eventManager, publishEvent } from '../utils/event-system';
 import { IGameState } from '../types/game-state';
@@ -157,6 +160,46 @@ export class GameUI extends PIXI.Container {
     );
     this.addChild(this.resetButton);
 
+    // Create symbols payout display
+    const symbolsContainer = new PIXI.Container();
+    symbolsContainer.position.set(10, 100);
+    
+    // Add title
+    const title = new PIXI.Text({
+      text: 'Symbol Payouts',
+      style: {
+        fontFamily: this.config.fontFamily,
+        fontSize: this.config.labelFontSize,
+        fill: this.config.textColor
+      }
+    } as PIXI.TextOptions);
+    symbolsContainer.addChild(title);
+    
+    // Create grid of symbols
+    SYMBOLS_ARRAY.forEach((symbol, index) => {
+      const yPos = 30 + (index * 30);
+      
+      // // Create symbol sprite
+      // const texture = PIXI.Texture.from(symbol.texturePath);
+      // const sprite = new PIXI.Sprite(texture);
+      // sprite.scale.set(0.2);      
+      // sprite.position.set(0, yPos);
+      // symbolsContainer.addChild(sprite);
+      
+      // Create value text
+      const valueText = new PIXI.Text({
+        text: `${symbol.emoji} ${symbol.payoutValue}`,
+        style: {
+          fontFamily: this.config.fontFamily,
+          fontSize: this.config.valueFontSize/2,
+          fill: this.config.textColor
+        }
+      } as PIXI.TextOptions);
+      valueText.position.set(5, yPos + 5);
+      symbolsContainer.addChild(valueText);
+    });
+
+    this.addChild(symbolsContainer);
   }
   
   /**

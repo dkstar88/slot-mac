@@ -4,27 +4,24 @@ import { Symbol, SymbolInstance, SymbolType } from '../types/symbols';
  * Definitions for all symbols in the game
  */
 export const SYMBOLS: Record<SymbolType, Symbol> = {
-  [SymbolType.SEVEN]: {
-    type: SymbolType.SEVEN,
-    name: 'Seven',
-    emoji: '7️⃣',
-    texturePath: 'assets/symbols/seven.png',
+  [SymbolType.PINEAPPLE]: {
+    type: SymbolType.PINEAPPLE,
+    name: SymbolType.PINEAPPLE,
+    emoji: '🍍',
     payoutValue: 100,
     rarityWeight: 1 // Rarest
   },
-  [SymbolType.BAR]: {
-    type: SymbolType.BAR,
-    name: 'Bar',
-    emoji: '🍫',
-    texturePath: 'assets/symbols/bar.png',
+  [SymbolType.GRAPE]: {
+    type: SymbolType.GRAPE,
+    name: SymbolType.GRAPE,
+    emoji: '🍇',
     payoutValue: 50,
     rarityWeight: 2
   },
-  [SymbolType.BELL]: {
-    type: SymbolType.BELL,
-    emoji: '🔔',
-    name: 'Bell',
-    texturePath: 'assets/symbols/bell.png',
+  [SymbolType.STRAWBERRY]: {
+    type: SymbolType.STRAWBERRY,
+    emoji: '🍓',
+    name: SymbolType.STRAWBERRY,
     payoutValue: 30,
     rarityWeight: 3
   },
@@ -32,7 +29,6 @@ export const SYMBOLS: Record<SymbolType, Symbol> = {
     type: SymbolType.WATERMELON,
     emoji: '🍉',
     name: 'Watermelon',
-    texturePath: 'assets/symbols/watermelon.png',
     payoutValue: 20,
     rarityWeight: 4
   },
@@ -40,7 +36,6 @@ export const SYMBOLS: Record<SymbolType, Symbol> = {
     type: SymbolType.ORANGE,
     name: 'Orange',
     emoji: '🍊',
-    texturePath: 'assets/symbols/orange.png',
     payoutValue: 15,
     rarityWeight: 5
   },
@@ -48,7 +43,6 @@ export const SYMBOLS: Record<SymbolType, Symbol> = {
     type: SymbolType.LEMON,
     name: 'Lemon',
     emoji: '🍋',
-    texturePath: 'assets/symbols/lemon.png',
     payoutValue: 10,
     rarityWeight: 6
   },
@@ -56,7 +50,6 @@ export const SYMBOLS: Record<SymbolType, Symbol> = {
     type: SymbolType.CHERRY,
     name: 'Cherry',
     emoji: '🍒',
-    texturePath: 'assets/symbols/cherry.png',
     payoutValue: 5,
     rarityWeight: 7 // Most common
   }
