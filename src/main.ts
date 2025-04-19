@@ -7,7 +7,7 @@ import { GameEventType } from './types/events';
 import { GameStateType } from './types/game-state';
 import { SYMBOLS_ARRAY } from './core/symbols';
 import { detectWins, calculatePayout } from './core/winning-patterns';
-
+import { loadAllAssets } from './assets';
 /**
  * Game configuration
  */
@@ -51,6 +51,7 @@ class FruitfulFortune {
       height: CONFIG.height,
       backgroundColor: CONFIG.backgroundColor,
       antialias: true,
+      useBackBuffer: true,
       view: canvas
     });
     
@@ -64,58 +65,40 @@ class FruitfulFortune {
     }
 
     // Load assets
-    this.initGame();
+    this.loadAssets();
   }
   
   /**
    * Load game assets
    */
-  // private loadAssets(): void {
-  //   // Create a loader
-  //   const loader = PIXI.Assets;
-        
-  //   // Add symbol textures to load
-  //   const symbolsAssets = []
+  private loadAssets(): void {
     
-  //   console.log('Loading symbol textures:', symbolsAssets);
+    const loadPromises = loadAllAssets();
     
-  //   // Create a promise for each texture to load
-  //   const loadPromises = symbolsAssets.map(asset => {
-  //     return loader.load(asset)
-  //       .then(texture => {
-  //         console.log(`Successfully loaded texture: ${asset.src}`);
-  //         return { asset, texture, success: true };
-  //       })
-  //       .catch(error => {
-  //         console.error(`Failed to load texture: ${asset.src}`, error);
-  //         return { asset, error, success: false };
-  //       });
-  //   });
-    
-  //   // Wait for all textures to load (or fail)
-  //   Promise.all(loadPromises)
-  //     .then(results => {
+    // Wait for all textures to load (or fail)
+    Promise.all(loadPromises)
+      .then(results => {
         
 
-  //       const successCount = results.filter(r => r.success).length;
-  //       const failCount = results.length - successCount;
+        const successCount = results.filter(r => r.success).length;
+        const failCount = results.length - successCount;
         
-  //       console.log(`Asset loading complete. Success: ${successCount}, Failed: ${failCount}`);
+        console.log(`Asset loading complete. Success: ${successCount}, Failed: ${failCount}`);
         
-  //       if (failCount > 0) {
-  //         console.warn('Some assets failed to load. The game will use fallback graphics for these.');
-  //       }
+        if (failCount > 0) {
+          console.warn('Some assets failed to load. The game will use fallback graphics for these.');
+        }
         
-  //       // this.assetsLoaded = true;
-  //       this.initGame();
+        // this.assetsLoaded = true;
+        this.initGame();
         
-  //       // Hide loading screen
-  //       const loadingScreen = document.getElementById('loading-screen');
-  //       if (loadingScreen) {
-  //         loadingScreen.style.display = 'none';
-  //       }
-  //     });
-  // }
+        // Hide loading screen
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+          loadingScreen.style.display = 'none';
+        }
+      });
+  }
   
 
   private hideLoadingScreen(): void {
@@ -133,6 +116,13 @@ class FruitfulFortune {
 
 
     this.hideLoadingScreen();
+    // Create game UI
+    this.gameUI = new GameUI({
+      width: CONFIG.width,
+      height: CONFIG.height
+    });
+    this.app.stage.addChild(this.gameUI);
+
 
     // Create game board
     this.gameBoard = new GameBoard({
@@ -146,12 +136,6 @@ class FruitfulFortune {
     this.gameBoard.position.set(0, 0);
     this.app.stage.addChild(this.gameBoard);
     
-    // Create game UI
-    this.gameUI = new GameUI({
-      width: CONFIG.width,
-      height: CONFIG.height
-    });
-    this.app.stage.addChild(this.gameUI);
     
     // Subscribe to events
     this.subscribeToEvents();

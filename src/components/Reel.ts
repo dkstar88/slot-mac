@@ -102,16 +102,30 @@ export class Reel extends PIXI.Container {
     
     this.reelIndex = reelIndex;
     this.config = { ...DEFAULT_CONFIG, ...config };
-    
+
+        
+    const shadowed = new PIXI.Sprite(
+      {
+        texture: PIXI.Assets.get('reel'),
+        width: this.config.width,
+        height: this.config.height,
+      }
+    );
+    shadowed.anchor.set(0, 0);
+    this.addChild(shadowed);
+        
     // Create container for symbols
     this.symbolsContainer = new PIXI.Container();
     this.addChild(this.symbolsContainer);
     
+
+        
     // Create mask
     this.symbolsMask = new PIXI.Graphics();
     this.symbolsMask.rect(0, 0, this.config.width, this.config.height).fill(0xffffff);
     this.addChild(this.symbolsMask);
-    
+
+
     // Apply mask to symbols container
     this.symbolsContainer.mask = this.symbolsMask;
     
@@ -123,7 +137,7 @@ export class Reel extends PIXI.Container {
     
     // Initialize symbols
     this.initSymbols();
-    
+
     // Set up ticker for animation updates
     PIXI.Ticker.shared.add(this.update, this);
   }
@@ -173,22 +187,51 @@ export class Reel extends PIXI.Container {
     // container.label = `symbol-${symbolInstance.symbol.type}`;
     
     // Create background
-    const background = new PIXI.Graphics();
-    background.rect(0, 0, this.config.symbolSize, this.config.symbolSize).fill(0xffffff);
-    container.addChild(background);
+    // const background = new PIXI.Graphics();
+    // background.rect(0, 0, this.config.symbolSize, this.config.symbolSize).fill(0xffffff);
+    // container.addChild(background);
     
-    // Create symbol
-    const text = new PIXI.Text({
-      text: symbolInstance.symbol.emoji,
-      style:{
-        fontFamily: 'Arial',
-        fontSize: this.config.symbolSize * 0.7,
-        fill: 0x000000,
-        align: 'center'  
-      }
-    });
-    text.anchor.set(0, 0);
-    container.addChild(text);
+    // Get the texture from the PIXI.Assets cache
+    const texture = PIXI.Assets.get(symbolInstance.symbol.type);
+
+    if (texture) {
+      // Create sprite with the texture
+      const sprite = new PIXI.Sprite(texture);
+      
+      // Scale the sprite to fit within the symbol size
+      const padding = 10;
+      const maxSize = this.config.symbolSize - (padding * 2);
+      
+      // Calculate scale to fit within the maxSize while maintaining aspect ratio
+      const scale = Math.min(
+        maxSize / sprite.width,
+        maxSize / sprite.height
+      );
+      
+      sprite.scale.set(scale, scale);
+      
+      // Center the sprite in the container
+      sprite.anchor.set(0.5);
+      sprite.position.set(this.config.symbolSize / 2, this.config.symbolSize / 2);
+      
+      // Add sprite to container
+      container.addChild(sprite);
+    } else {
+      // Create symbol
+      const text = new PIXI.Text({
+        text: symbolInstance.symbol.emoji,
+        style:{
+          fontFamily: 'Arial',
+          fontSize: this.config.symbolSize * 0.7,
+          fill: 0x000000,
+          align: 'center'  
+        }
+      });
+      text.anchor.set(0, 0);
+      container.addChild(text);
+    }
+
+
         
     
     return container;

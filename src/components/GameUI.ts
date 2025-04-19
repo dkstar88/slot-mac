@@ -102,43 +102,67 @@ export class GameUI extends PIXI.Container {
    * Initialize UI elements
    */
   private initUI(): void {
+
+    // Create background
+
+    const background = new PIXI.Sprite(PIXI.Assets.get('background'));
+    background.position.set(0, 0);
+    background.width = this.config.width;
+    background.height = this.config.height;
+    this.addChild(background);
+
+    const slotFrame = new PIXI.Sprite(PIXI.Assets.get('slots'));
+    slotFrame.position.set(100, 130);
+    slotFrame.width = this.config.width - 215;
+    slotFrame.height = this.config.height - 260;
+    this.addChild(slotFrame);
+
     // Create coin display
     this.coinDisplay = new PIXI.Text({
       text: 'Coins: 0',
-      fontFamily: this.config.fontFamily,
-      fontSize: this.config.valueFontSize,
-      fill: this.config.textColor
-    } as PIXI.TextOptions);
+      style: {
+        fontFamily: this.config.fontFamily,
+        fontSize: this.config.valueFontSize,
+        fill: this.config.textColor
+      }
+    });
     this.coinDisplay.position.set(20, 20);
     this.addChild(this.coinDisplay);
     
     // Create multiplier display
-    this.multiplierDisplay = new PIXI.Text('Multiplier: 1x', {
-      fontFamily: this.config.fontFamily,
-      fontSize: this.config.valueFontSize,
-      fill: this.config.textColor
-    });
+    this.multiplierDisplay = new PIXI.Text({
+      text: 'Multiplier: 1x',
+      style: {
+        fontFamily: this.config.fontFamily,
+        fontSize: this.config.valueFontSize,
+        fill: this.config.textColor
+      }
+    });    
     this.multiplierDisplay.position.set(20, 60);
     this.addChild(this.multiplierDisplay);
     
     // Create message display
-    this.messageDisplay = new PIXI.Text('', {
-      fontFamily: this.config.fontFamily,
-      fontSize: this.config.messageFontSize,
-      fill: this.config.textColor,
-      align: 'center'
-    });
+    this.messageDisplay = new PIXI.Text({
+      style: {
+        fontFamily: this.config.fontFamily,
+        fontSize: this.config.valueFontSize,
+        fill: this.config.textColor,
+        align: 'center',
+      }
+    }); 
     this.messageDisplay.anchor.set(0.5, 0);
     this.messageDisplay.position.set(this.config.width / 2, 100);
     this.addChild(this.messageDisplay);
     
     // Create win amount display
-    this.winAmountDisplay = new PIXI.Text('', {
-      fontFamily: this.config.fontFamily,
-      fontSize: this.config.messageFontSize,
-      fill: 0xffff00, // Yellow for win amounts
-      align: 'center'
-    });
+    this.winAmountDisplay = new PIXI.Text({
+      style: {
+        fontFamily: this.config.fontFamily,
+        fontSize: this.config.valueFontSize,
+        fill: this.config.textColor,
+        align: 'center',
+      }
+    }); 
     this.winAmountDisplay.anchor.set(0.5, 0);
     this.winAmountDisplay.position.set(this.config.width / 2, 150);
     this.winAmountDisplay.visible = false;
@@ -160,13 +184,15 @@ export class GameUI extends PIXI.Container {
     );
     this.addChild(this.resetButton);
 
+
+
     // Create symbols payout display
     const symbolsContainer = new PIXI.Container();
-    symbolsContainer.position.set(10, 100);
+    symbolsContainer.position.set(10, 180);
     
     // Add title
     const title = new PIXI.Text({
-      text: 'Symbol Payouts',
+      text: 'Values',
       style: {
         fontFamily: this.config.fontFamily,
         fontSize: this.config.labelFontSize,
@@ -177,25 +203,18 @@ export class GameUI extends PIXI.Container {
     
     // Create grid of symbols
     SYMBOLS_ARRAY.forEach((symbol, index) => {
-      const yPos = 30 + (index * 30);
-      
-      // // Create symbol sprite
-      // const texture = PIXI.Texture.from(symbol.texturePath);
-      // const sprite = new PIXI.Sprite(texture);
-      // sprite.scale.set(0.2);      
-      // sprite.position.set(0, yPos);
-      // symbolsContainer.addChild(sprite);
-      
+      const yPos = 30 + (index * 20);
+            
       // Create value text
       const valueText = new PIXI.Text({
-        text: `${symbol.emoji} ${symbol.payoutValue}`,
+        text: `${symbol.emoji}  ${symbol.payoutValue}`,
         style: {
           fontFamily: this.config.fontFamily,
           fontSize: this.config.valueFontSize/2,
           fill: this.config.textColor
         }
       } as PIXI.TextOptions);
-      valueText.position.set(5, yPos + 5);
+      valueText.position.set(1, yPos);
       symbolsContainer.addChild(valueText);
     });
 
