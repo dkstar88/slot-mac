@@ -8,50 +8,50 @@ export const SYMBOLS: Record<SymbolType, Symbol> = {
     type: SymbolType.PINEAPPLE,
     name: SymbolType.PINEAPPLE,
     emoji: '🍍',
-    payoutValue: 100,
+    payoutValue: 21,
     rarityWeight: 1 // Rarest
   },
   [SymbolType.GRAPE]: {
     type: SymbolType.GRAPE,
     name: SymbolType.GRAPE,
     emoji: '🍇',
-    payoutValue: 50,
+    payoutValue: 13,
     rarityWeight: 2
   },
   [SymbolType.STRAWBERRY]: {
     type: SymbolType.STRAWBERRY,
     emoji: '🍓',
     name: SymbolType.STRAWBERRY,
-    payoutValue: 30,
+    payoutValue: 8,
     rarityWeight: 3
   },
   [SymbolType.WATERMELON]: {
     type: SymbolType.WATERMELON,
     emoji: '🍉',
     name: 'Watermelon',
-    payoutValue: 20,
-    rarityWeight: 4
+    payoutValue: 5,
+    rarityWeight: 5
   },
   [SymbolType.ORANGE]: {
     type: SymbolType.ORANGE,
     name: 'Orange',
     emoji: '🍊',
-    payoutValue: 15,
-    rarityWeight: 5
+    payoutValue: 3,
+    rarityWeight: 8
   },
   [SymbolType.LEMON]: {
     type: SymbolType.LEMON,
     name: 'Lemon',
     emoji: '🍋',
-    payoutValue: 10,
-    rarityWeight: 6
+    payoutValue: 2,
+    rarityWeight: 13
   },
   [SymbolType.CHERRY]: {
     type: SymbolType.CHERRY,
     name: 'Cherry',
     emoji: '🍒',
-    payoutValue: 5,
-    rarityWeight: 7 // Most common
+    payoutValue: 1,
+    rarityWeight: 21 // Most common
   }
 };
 

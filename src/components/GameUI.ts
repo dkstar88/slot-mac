@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js';
 import { SpinButton } from './SpinButton';
 import { SYMBOLS_ARRAY } from '../core/symbols';
 import { Symbol } from '../types/symbols';
-
+import { sound } from '@pixi/sound';
 import { GameEventType } from '../types/events';
 import { eventManager, publishEvent } from '../utils/event-system';
 import { IGameState } from '../types/game-state';
@@ -294,7 +294,20 @@ export class GameUI extends PIXI.Container {
    * @param multiplier Multiplier applied
    */
   private onPayoutCalculated(amount: number): void {
+
+
     if (amount > 0) {
+      var soundSec = 1;
+      if (amount < 5) {
+        soundSec = 1;
+      } else if (amount < 10) {
+        soundSec = 2;
+      } else if (amount < 20) {
+        soundSec = 3;
+      } else if (amount < 50) {
+        soundSec = 4;
+      }      
+      sound.play("payout" + soundSec);
       this.showWinAmount(amount);
       this.showMessage(`You won ${amount} coins!`);
     } else {

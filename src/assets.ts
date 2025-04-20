@@ -1,5 +1,6 @@
 import { Assets } from 'pixi.js';
 import { SYMBOLS_ARRAY } from './core/symbols';
+import { sound } from '@pixi/sound';
 
 export function loadAllAssets(): Promise<{ asset: { src: string; alias: string; }; texture: any; success: boolean; } | { asset: { src: string; alias: string; }; error: any; success: boolean; }>[]
 {
@@ -11,29 +12,33 @@ export function loadAllAssets(): Promise<{ asset: { src: string; alias: string; 
       });
     const soundsAssets = [
         {
-            src: 'assets/sounds/spin.mp3',
+            src: 'assets/sound/spin.mp3',
             alias: 'spin'
         },
         {
-            src: 'assets/sounds/win.mp3',
-            alias: 'win'
+            src: 'assets/sound/payout1.mp3',
+            alias: 'payout1'
         },
         {
-            src: 'assets/sounds/lose.mp3',
-            alias: 'lose'
+            src: 'assets/sound/payout2.mp3',
+            alias: 'payout2'
         },
         {
-            src: 'assets/sounds/bonus.mp3',
-            alias: 'bonus'
+            src: 'assets/sound/payout3.mp3',
+            alias: 'payout3'
         },
         {
-            src: 'assets/sounds/collect.mp3',
-            alias: 'collect'
+            src: 'assets/sound/payout4.mp3',
+            alias: 'payout4'
         },
         {
-            src: 'assets/sounds/stop.mp3',
-            alias: 'stop'
-        }
+            src: 'assets/sound/jackpot.mp3',
+            alias: 'jackpot'
+        },
+        {
+            src: 'assets/sound/insert.mp3',
+            alias: 'insert'
+        },        
     ];
     const uiAssets = [
         {
@@ -51,7 +56,7 @@ export function loadAllAssets(): Promise<{ asset: { src: string; alias: string; 
     ]
     
     const allAssets = [...symbolsAssets,
-        ...soundsAssets, ...uiAssets
+        ...uiAssets
     ];
 
     const loadPromises = allAssets.map(asset => {
@@ -65,6 +70,11 @@ export function loadAllAssets(): Promise<{ asset: { src: string; alias: string; 
           return { asset, error, success: false };
         });
     });
+
+    soundsAssets.forEach(soundAsset => {
+        sound.add(soundAsset.alias, soundAsset.src);        
+    });
+
     return loadPromises;
 
 }

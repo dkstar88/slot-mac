@@ -2,6 +2,7 @@ import * as PIXI from 'pixi.js';
 import { GameEventType } from '../types/events';
 import { publishEvent } from '../utils/event-system';
 import { GameStateType } from '../types/game-state';
+import { sound } from '@pixi/sound';
 
 /**
  * Configuration for the spin button
@@ -205,11 +206,15 @@ export class SpinButton extends PIXI.Container {
   private onClick(): void {
     console.log("SpinButton clicked");
     
-    // Publish spin button clicked event
-    publishEvent(GameEventType.SPIN_BUTTON_CLICKED, {});
-    
-    // Start spinning animation
-    this.startSpinning();
+    this.disable();
+    sound.play("insert", () => {
+      // Publish spin button clicked event
+      publishEvent(GameEventType.SPIN_BUTTON_CLICKED, {});
+      
+      // Start spinning animation
+      this.startSpinning();      
+      this.enable();
+    });    
   }
   
   /**
@@ -217,7 +222,7 @@ export class SpinButton extends PIXI.Container {
    */
   public startSpinning(): void {
     if (this.isSpinning) return;
-    
+
     this.isSpinning = true;
     this.state = 'spinning';
     this.drawBackground();

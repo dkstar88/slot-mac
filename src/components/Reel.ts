@@ -629,6 +629,7 @@ export class Reel extends PIXI.Container {
           );
         highlight.label = 'highlight';
         symbolContainer.addChild(highlight);
+        
       }
     }
   }

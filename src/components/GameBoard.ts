@@ -245,8 +245,9 @@ export class GameBoard extends PIXI.Container {
     if (winningCombinations.length > 0) {
       // Collect all winning symbols
       const winningSymbols: SymbolInstance[] = [];
-      
+
       for (const { symbols } of winningCombinations) {
+   
         winningSymbols.push(...symbols);
         // console.log("GameBoard: Winning symbols detected", symbols);
         // Publish win detected event
