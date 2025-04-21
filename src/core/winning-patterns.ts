@@ -225,21 +225,11 @@ export function detectWins(board: SymbolInstance[][]): Win[] {
  * @returns Total payout value
  */
 export function calculatePayout(
-  winningCombinations: { pattern: WinningPattern; symbols: SymbolInstance[] }[],
+  wins: Win[],
   currentMultiplier: number
 ): number {
-  let totalPayout = 0;
-  
-  for (const { pattern, symbols } of winningCombinations) {
-    // Get the symbol value (all symbols in a combination are the same)
-    const symbolValue = symbols[0].symbol.payoutValue;
-    
-    // Calculate the payout for this combination
-    const combinationPayout = symbolValue * pattern.multiplier * currentMultiplier;
-    
-    totalPayout += combinationPayout;
-  }
-  
+  const totalPayout = wins.reduce((acc, win) => acc + win.totalValue, 0) * currentMultiplier;
+ 
   return totalPayout;
 }
 

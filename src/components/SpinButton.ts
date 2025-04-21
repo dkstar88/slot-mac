@@ -31,7 +31,7 @@ export interface SpinButtonConfig {
   
   /** Text to display on the button */
   text: string;
-  
+  bet: number;
   /** Text style */
   textStyle: PIXI.TextStyle;
 }
@@ -48,6 +48,7 @@ const DEFAULT_CONFIG: SpinButtonConfig = {
   hoverColor: 0xff3333,
   pressedColor: 0xcc0000,
   text: 'SPIN',
+  bet: 1,
   textStyle: new PIXI.TextStyle({
     fontFamily: 'Arial',
     fontSize: 24,
@@ -209,7 +210,10 @@ export class SpinButton extends PIXI.Container {
     this.disable();
     sound.play("insert", () => {
       // Publish spin button clicked event
-      publishEvent(GameEventType.SPIN_BUTTON_CLICKED, {});
+      
+      publishEvent(GameEventType.SPIN_BUTTON_CLICKED, {
+        bet: this.config.bet
+      });
       
       // Start spinning animation
       this.startSpinning();      

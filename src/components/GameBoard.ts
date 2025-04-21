@@ -209,22 +209,22 @@ export class GameBoard extends PIXI.Container {
     }
   }
   
-  /**
-   * Stop spinning the reels
-   * @param targetSymbols Optional target symbols for each reel
-   */
-  public stopSpin(targetSymbols?: Symbol[][]): void {
-    if (!this.isSpinning) return;
+  // /**
+  //  * Stop spinning the reels
+  //  * @param targetSymbols Optional target symbols for each reel
+  //  */
+  // public stopSpin(targetSymbols?: Symbol[][]): void {
+  //   if (!this.isSpinning) return;
     
-    // Stop each reel
-    for (let i = 0; i < this.reels.length; i++) {
-      const reel = this.reels[i];
-      const reelTargetSymbols = targetSymbols ? targetSymbols[i] : undefined;
+  //   // Stop each reel
+  //   for (let i = 0; i < this.reels.length; i++) {
+  //     const reel = this.reels[i];
+  //     const reelTargetSymbols = targetSymbols ? targetSymbols[i] : undefined;
       
-      // Stop the reel
-      reel.stopSpin(reelTargetSymbols);
-    }
-  }
+  //     // Stop the reel
+  //     reel.stopSpin(reelTargetSymbols);
+  //   }
+  // }
   
   /**
    * Detect winning combinations

@@ -2,12 +2,12 @@ import * as PIXI from 'pixi.js';
 import { GameBoard } from './components/GameBoard';
 import { GameUI } from './components/GameUI';
 import { GameStateManager } from './state/game-state-manager';
-import { eventManager, publishEvent } from './utils/event-system';
+import { eventManager } from './utils/event-system';
 import { GameEventType } from './types/events';
 import { GameStateType } from './types/game-state';
-import { SYMBOLS_ARRAY } from './core/symbols';
 import { detectWins, calculatePayout } from './core/winning-patterns';
 import { loadAllAssets } from './assets';
+import { GameBackground } from './components/GameBackground';
 /**
  * Game configuration
  */
@@ -31,7 +31,7 @@ class FruitfulFortune {
   // Game components
   private gameBoard!: GameBoard;
   private gameUI!: GameUI;
-  
+  private gameBackground!: GameBackground;
   // Assets loaded flag
   // private assetsLoaded: boolean = false;
   
@@ -116,13 +116,13 @@ class FruitfulFortune {
 
 
     this.hideLoadingScreen();
+
     // Create game UI
-    this.gameUI = new GameUI({
+    this.gameBackground = new GameBackground({
       width: CONFIG.width,
       height: CONFIG.height
     });
-    this.app.stage.addChild(this.gameUI);
-
+    this.app.stage.addChild(this.gameBackground);
 
     // Create game board
     this.gameBoard = new GameBoard({
@@ -136,16 +136,24 @@ class FruitfulFortune {
     this.gameBoard.position.set(0, 0);
     this.app.stage.addChild(this.gameBoard);
     
+    // Create game UI
+    this.gameUI = new GameUI({
+      width: CONFIG.width,
+      height: CONFIG.height
+    });
+    this.app.stage.addChild(this.gameUI);
+
+
     
     // Subscribe to events
     this.subscribeToEvents();
     
     // Add keyboard controls
-    window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && GameStateManager.getState().currentState === GameStateType.IDLE) {
-        publishEvent(GameEventType.SPIN_BUTTON_CLICKED, {});
-      }
-    });
+    // window.addEventListener('keydown', (e) => {
+    //   if (e.code === 'Space' && GameStateManager.getState().currentState === GameStateType.IDLE) {
+    //     publishEvent(GameEventType.SPIN_BUTTON_CLICKED, {});
+    //   }
+    // });
     
     // Show welcome message
     this.gameUI.showMessage('Welcome to Fruitful Fortune!', 3000);
@@ -157,8 +165,8 @@ class FruitfulFortune {
    */
   private subscribeToEvents(): void {
     // Subscribe to spin button clicked event
-    eventManager.subscribe(GameEventType.SPIN_BUTTON_CLICKED, () => {
-      this.onSpinButtonClicked();
+    eventManager.subscribe(GameEventType.SPIN_BUTTON_CLICKED, (event: any) => {
+      this.onSpinButtonClicked(event.bet);
     });
     
     // Subscribe to all reels stopped event
@@ -170,7 +178,7 @@ class FruitfulFortune {
   /**
    * Handle spin button clicked event
    */
-  private onSpinButtonClicked(): void {
+  private onSpinButtonClicked(bet: number): void {
     console.log("Main: onSpinButtonClicked called");
     
     // Check if can spin
@@ -181,7 +189,7 @@ class FruitfulFortune {
     }
     
     // Start spin
-    GameStateManager.startSpin();
+    GameStateManager.startSpin(bet);
     
     // Start spinning the reels
     console.log("Main: Starting to spin reels");
@@ -201,7 +209,7 @@ class FruitfulFortune {
       totalPayout: 0, // This would be calculated based on the wins
       isJackpot: false // This would be determined based on the wins
     };
-    spinResult.totalPayout = spinResult.wins.reduce((acc, win) => acc + win.totalValue, 0);
+    spinResult.totalPayout = calculatePayout(spinResult.wins, GameStateManager.getState().currentMultiplier);
     // End spin
     GameStateManager.endSpin(spinResult);
   }

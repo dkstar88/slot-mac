@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { AnimatedSprite } from 'pixi.js';
 import { SpinButton } from './SpinButton';
 import { SYMBOLS_ARRAY } from '../core/symbols';
 import { Symbol } from '../types/symbols';
@@ -59,7 +60,8 @@ export class GameUI extends PIXI.Container {
   private config: GameUIConfig;
   
   /** Spin button */
-  private spinButton!: SpinButton;
+  // private spinButton!: SpinButton;
+  private spinButtons: SpinButton[] = [];
   
   /** Reset button */
   private resetButton!: PIXI.Container;
@@ -82,6 +84,12 @@ export class GameUI extends PIXI.Container {
   /** Message timeout ID */
   private messageTimeoutId: number | null = null;
   
+  /** Container for coin particles */
+  private particleContainer!: PIXI.Container;
+  
+  /** Gold coin spritesheet */
+  private goldCoinSpritesheet: PIXI.Spritesheet | null = null;
+  
   /**
    * Constructor
    * @param config Configuration for the UI
@@ -94,6 +102,9 @@ export class GameUI extends PIXI.Container {
     // Initialize UI elements
     this.initUI();
     
+    // Initialize particle system
+    this.initParticleSystem();
+    
     // Subscribe to events
     this.subscribeToEvents();
   }
@@ -103,19 +114,6 @@ export class GameUI extends PIXI.Container {
    */
   private initUI(): void {
 
-    // Create background
-
-    const background = new PIXI.Sprite(PIXI.Assets.get('background'));
-    background.position.set(0, 0);
-    background.width = this.config.width;
-    background.height = this.config.height;
-    this.addChild(background);
-
-    const slotFrame = new PIXI.Sprite(PIXI.Assets.get('slots'));
-    slotFrame.position.set(100, 130);
-    slotFrame.width = this.config.width - 215;
-    slotFrame.height = this.config.height - 260;
-    this.addChild(slotFrame);
 
     // Create coin display
     this.coinDisplay = new PIXI.Text({
@@ -167,14 +165,23 @@ export class GameUI extends PIXI.Container {
     this.winAmountDisplay.position.set(this.config.width / 2, 150);
     this.winAmountDisplay.visible = false;
     this.addChild(this.winAmountDisplay);
-    
+        
     // Create spin button
-    this.spinButton = new SpinButton();
-    this.spinButton.position.set(
-      this.config.width / 2 - this.spinButton.width / 2,
-      this.config.height - this.spinButton.height - 20
-    );
-    this.addChild(this.spinButton);
+    const spinButtonsWidth = (120+10)*5;
+    var spinButtonX = this.config.width / 2 - spinButtonsWidth / 2; 
+    [1, 2, 3, 5, 10].forEach((bet) => {
+      const betBtn = new SpinButton({
+        text: "Bet " + bet.toString(),
+        bet: bet,
+      });
+      betBtn.position.set(
+        spinButtonX,
+        this.config.height - 50 - 20
+      );
+      this.addChild(betBtn);
+      this.spinButtons.push(betBtn);
+      spinButtonX += betBtn.width + 10;
+    });
     
     // Create reset button
     this.resetButton = this.createResetButton();
@@ -231,8 +238,8 @@ export class GameUI extends PIXI.Container {
     });
     
     // Subscribe to spin button clicked event
-    eventManager.subscribe(GameEventType.SPIN_BUTTON_CLICKED, () => {
-      this.onSpinButtonClicked();
+    eventManager.subscribe(GameEventType.SPIN_BUTTON_CLICKED, (event: any) => {
+      this.onSpinButtonClicked(event.bet);
     });
     
     // Subscribe to spin started event
@@ -269,13 +276,16 @@ export class GameUI extends PIXI.Container {
     this.updateUI();
     
     // Update spin button state
-    this.spinButton.updateFromGameState(state.currentState);
+    this.spinButtons.forEach((spinButton) => {
+      spinButton.updateFromGameState(state.currentState);
+    });
+    
   }
   
   /**
    * Handle spin button clicked event
    */
-  private onSpinButtonClicked(): void {
+  private onSpinButtonClicked(bet: number): void {
     // Check if can spin
     if (!this.gameState || !this.gameState.canSpin) {
       return;
@@ -284,7 +294,7 @@ export class GameUI extends PIXI.Container {
     // Publish spin started event
     publishEvent(GameEventType.SPIN_STARTED, {
       currentCoins: this.gameState.playerStats.coins,
-      spinCost: 1
+      spinCost: bet
     });
   }
   
@@ -294,9 +304,9 @@ export class GameUI extends PIXI.Container {
    * @param multiplier Multiplier applied
    */
   private onPayoutCalculated(amount: number): void {
-
-
     if (amount > 0) {
+      // Emit gold coins based on payout amount
+      this.emitGoldCoins(amount);
       var soundSec = 1;
       if (amount < 5) {
         soundSec = 1;
@@ -325,7 +335,7 @@ export class GameUI extends PIXI.Container {
     this.coinDisplay.text = `Coins: ${this.gameState.playerStats.coins}`;
     
     // Update multiplier display
-    this.multiplierDisplay.text = `Multiplier: ${this.gameState.currentMultiplier}x`;
+    this.multiplierDisplay.text = `Bet: ${this.gameState.currentMultiplier} coins`;
   }
   
   /**
@@ -483,6 +493,117 @@ export class GameUI extends PIXI.Container {
   }
   
   /**
+   * Initialize the particle system
+   */
+  private initParticleSystem(): void {
+    // Create container for particles
+    const layer = new PIXI.RenderLayer();
+    this.addChild(layer);
+    this.particleContainer = new PIXI.Container();
+    this.particleContainer.zIndex = 999; // Ensure it's above the background
+    layer.attach(this.particleContainer);
+    this.addChild(this.particleContainer);
+    
+    // Get the gold coin spritesheet data
+    const goldAnimResource = PIXI.Assets.get('goldAnim');
+    if (goldAnimResource) {
+      // The spritesheet should already be loaded and parsed by PIXI.Assets
+      this.goldCoinSpritesheet = goldAnimResource;
+    }
+  }
+  
+  /**
+   * Emit gold coins based on payout amount
+   * @param amount Number of coins to emit
+   */
+  private emitGoldCoins(amount: number): void {
+    if (!this.goldCoinSpritesheet) return;
+    
+    // Calculate number of coins to emit (cap at a reasonable maximum)
+    const numCoins = Math.min(amount, 50);
+    
+    // Get the center position of the game board
+    const centerX = this.config.width / 2;
+    const centerY = this.config.height / 2;
+    
+    // Create and emit coins
+    for (let i = 0; i < numCoins; i++) {
+      // Create animated sprite from spritesheet
+      const frameNames = [
+        'gold_1.png',
+        'gold_2.png',
+        'gold_3.png',
+        'gold_4.png',
+        'gold_5.png',
+        'gold_6.png'
+      ];
+      
+      // Get textures from the spritesheet
+      const frames = frameNames.map(name => {
+        const texture = PIXI.Texture.from(name);
+        return texture;
+      });
+      
+      const coin = new AnimatedSprite(frames);
+      
+      // Set coin properties
+      coin.anchor.set(0.5);
+      coin.scale.set(0.5 + Math.random() * 0.5); // Random size
+      coin.animationSpeed = 0.2 + Math.random() * 0.1; // Random animation speed
+      coin.loop = true;
+      
+      // Set initial position (slightly randomized around center)
+      coin.position.set(
+        centerX + (Math.random() - 0.5) * 100,
+        centerY + (Math.random() - 0.5) * 100
+      );
+      
+      // Set random velocity
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 2 + Math.random() * 3;
+      const vx = Math.cos(angle) * speed;
+      const vy = Math.sin(angle) * speed - 5; // Initial upward velocity
+      
+      // Add to container
+      this.particleContainer.addChild(coin);
+      
+      // Start animation
+      coin.play();
+      
+      // Create animation
+      const startTime = Date.now();
+      const duration = 1000 + Math.random() * 1000; // Random duration
+      
+      // Use PixiJS ticker for animation
+      const animate = (ticker: PIXI.Ticker) => {
+        const currentTime = Date.now();
+        const elapsed = currentTime - startTime;
+        const progress = elapsed / duration;
+        
+        // Apply gravity
+        coin.position.x += vx;
+        coin.position.y += vy + progress * 10; // Increasing downward velocity
+        
+        // Spin the coin
+        coin.rotation += 0.1;
+        
+        // If animation is complete or coin is off-screen, remove it
+        if (progress >= 1 || 
+            coin.position.y > this.config.height + 50 ||
+            coin.position.x < -50 ||
+            coin.position.x > this.config.width + 50) {
+          PIXI.Ticker.shared.remove(animate);
+          this.particleContainer.removeChild(coin);
+          coin.destroy();
+        }
+      };
+      
+      // Add to ticker
+      PIXI.Ticker.shared.add(animate);
+    }
+  }
+  
+  /**
    * Clean up resources
    */
   public destroy(): void {
@@ -493,7 +614,14 @@ export class GameUI extends PIXI.Container {
     }
     
     // Destroy spin button
-    this.spinButton.destroy();
+    this.spinButtons.forEach((spinButton) => {
+      spinButton.destroy();
+    });
+    
+    // Destroy particle container
+    if (this.particleContainer) {
+      this.particleContainer.destroy({ children: true });
+    }
     
     // Call parent destroy
     super.destroy({ children: true });

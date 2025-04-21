@@ -91,6 +91,9 @@ export class Reel extends PIXI.Container {
   
   /** Tweening objects for animation */
   private tweening: any[] = [];
+
+  /** Target symbols */
+  private targetSymbols: Symbol[] = [];
   
   /**
    * Constructor
@@ -270,18 +273,25 @@ export class Reel extends PIXI.Container {
       time,
       this.backout(0.2),
       undefined,
-      this.onSpinComplete.bind(this)
+      () => this.onSpinComplete()
     );
+    
   }
   
   /**
    * Stop spinning the reel
    * @param targetSymbols Symbols to show when the reel stops
    */
-  public stopSpin(targetSymbols?: Symbol[]): void {
+  public stopSpin(): void {
+
+
+    /* TODO - REMOVE - Currently not working tween always complete at the right position, no need to scroll again */
 
     if (!this.isSpinning) return;
-    
+
+    console.log(`Reel ${this.reelIndex} stopSpin called`);
+
+    const targetSymbols = this.targetSymbols;
     // // If target symbols are provided, update the symbols
     if (targetSymbols && targetSymbols.length === this.config.visibleSymbols) {
       // Calculate the position where the reel should stop
@@ -317,25 +327,32 @@ export class Reel extends PIXI.Container {
     // Calculate the nearest stopping point (complete symbol)
     const symbolHeight = this.config.symbolSize + this.config.symbolSpacing;
     const targetPosition = Math.ceil(this.reelPosition / symbolHeight) * symbolHeight;
-    
+    console.log(`Reel ${this.reelIndex} at ${this.reelPosition} stopping at position: ${targetPosition}`);
     // Create a short tween to stop at the next symbol boundary
-    this.tweenTo(
-      'reelPosition',
-      targetPosition,
-      500 + this.config.spinStopDelay,
-      this.backout(0.8),
-      undefined,
-      this.onSpinComplete.bind(this)
-    );
+    if (this.reelPosition != targetPosition) {
+      this.tweenTo(
+        'reelPosition',
+        targetPosition,
+        100 + this.config.spinStopDelay,
+        this.backout(0.8),
+        undefined,
+        () => this.onSpinComplete()
+      );
+    } else {
+      // If already at target position, call spin complete directly
+      this.onSpinComplete();
+    }
+
   }
   
   /**
    * Called when spin animation completes
    */
-  private onSpinComplete(): void {
+  public onSpinComplete(): void {
+    console.log(`Reel ${this.reelIndex} onSpinComplete called`);
     // Animation complete
     this.isSpinning = false;
-    
+    this.targetSymbols = [];
     // Publish reel stopped event
     publishEvent(GameEventType.REEL_STOPPED, {
       reelIndex: this.reelIndex,

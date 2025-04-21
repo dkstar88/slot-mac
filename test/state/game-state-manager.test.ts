@@ -27,9 +27,9 @@ describe('GameStateManager', () => {
     const spinResult: SpinResult = {
       boardSymbols: [
         [
-            createSymbolInstanceFromType(SymbolType.BELL, 1, 1), 
-            createSymbolInstanceFromType(SymbolType.BELL, 1, 2), 
-            createSymbolInstanceFromType(SymbolType.BELL, 1, 3)
+            createSymbolInstanceFromType(SymbolType.GRAPE, 1, 1), 
+            createSymbolInstanceFromType(SymbolType.GRAPE, 1, 2), 
+            createSymbolInstanceFromType(SymbolType.GRAPE, 1, 3)
         ], 
         [
             createSymbolInstanceFromType(SymbolType.CHERRY, 2, 1), 

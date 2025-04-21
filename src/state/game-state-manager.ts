@@ -22,7 +22,9 @@ const DEFAULT_GAME_STATE: IGameState = {
   currentMultiplier: 1,
   currentSpinResult: null,
   canSpin: true,
-  recentSpins: []
+  recentSpins: [],
+  baseWinRate: 30,
+  luck: 0
 };
 
 /**
@@ -79,19 +81,20 @@ export class GameStateManagerImpl implements IGameStateManager {
   /**
    * Start a new spin
    */
-  startSpin(): void {
+  startSpin(bet: number = 1): void {
     // Check if can spin
     if (!this.state.canSpin || this.state.currentState !== GameStateType.IDLE) {
       return;
     }
     
     // Check if has enough coins
-    if (this.state.playerStats.coins < 1) {
+    if (this.state.playerStats.coins < bet) {
       return;
     }
     
     // Deduct coin
-    this.deductCoins(1);
+    this.deductCoins(bet);
+    this.updateMultiplier(bet);
     
     // Update player stats
     const updatedStats: PlayerStats = {
@@ -110,7 +113,7 @@ export class GameStateManagerImpl implements IGameStateManager {
     // Publish spin started event
     publishEvent(GameEventType.SPIN_STARTED, {
       currentCoins: this.state.playerStats.coins,
-      spinCost: 1
+      spinCost: bet
     });
   }
   

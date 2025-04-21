@@ -74,9 +74,13 @@ export interface IGameState {
   /** Player's stats */
   playerStats: PlayerStats;
   
-  /** Current multiplier value */
+  /** Current bet value */
   currentMultiplier: number;
   
+  /** Win rate control */
+  baseWinRate: number;
+  luck: number;
+
   /** Result of the current/last spin */
   currentSpinResult: SpinResult | null;
   

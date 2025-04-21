@@ -111,7 +111,7 @@ export function generateRandomBoard(rows: number, columns: number): Symbol[][] {
  * @param column Column position
  * @returns A new symbol instance
  */
-export function createSymbolInstance(symbol: Symbol, row: number, column: number) {
+export function createSymbolInstance(symbol: Symbol, row: number, column: number): SymbolInstance {
   return {
     symbol,
     row,
@@ -121,7 +121,7 @@ export function createSymbolInstance(symbol: Symbol, row: number, column: number
   };
 }
 
-export function createSymbolInstanceFromType(symbol: SymbolType, row: number, column: number) {
+export function createSymbolInstanceFromType(symbol: SymbolType, row: number, column: number): SymbolInstance {
   return {
     symbol: SYMBOLS[symbol],
     row,

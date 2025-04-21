@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { sliceArray, checkSymbolsMatch, detectWinningCombinations } from '../../src/core/winning-patterns'
+import { sliceArray, checkSymbolsMatch, detectWins, detectWinningCombinations } from '../../src/core/winning-patterns'
 import { createSymbolInstanceFromType, SYMBOLS } from '../../src/core/symbols';
 import { SymbolType } from '../../src/types/symbols';
 import { WinCombinationType } from '../../src/types/winning-combinations';
@@ -47,9 +47,9 @@ describe('Check Symbols Match (checkSymbolsMatch)', () => {
     it('should find matching symbols', () => {
         const board = [
             [
-                createSymbolInstanceFromType(SymbolType.BAR, 1, 1), 
-                createSymbolInstanceFromType(SymbolType.BAR, 1, 2), 
-                createSymbolInstanceFromType(SymbolType.BAR, 1, 3)
+                createSymbolInstanceFromType(SymbolType.GRAPE, 1, 1), 
+                createSymbolInstanceFromType(SymbolType.GRAPE, 1, 2), 
+                createSymbolInstanceFromType(SymbolType.GRAPE, 1, 3)
             ],
             [
                 createSymbolInstanceFromType(SymbolType.LEMON, 2, 1), 
@@ -57,9 +57,9 @@ describe('Check Symbols Match (checkSymbolsMatch)', () => {
                 createSymbolInstanceFromType(SymbolType.LEMON, 2, 3)
             ],
             [
-                createSymbolInstanceFromType(SymbolType.BAR, 3, 1), 
+                createSymbolInstanceFromType(SymbolType.GRAPE, 3, 1), 
                 createSymbolInstanceFromType(SymbolType.CHERRY, 3, 2), 
-                createSymbolInstanceFromType(SymbolType.BAR, 3, 3)
+                createSymbolInstanceFromType(SymbolType.GRAPE, 3, 3)
             ],            
         ]
 
@@ -71,9 +71,9 @@ describe('Check Symbols Match (checkSymbolsMatch)', () => {
         expect(matches.length).toBe(1)
         expect(matches).toStrictEqual([
             [
-                createSymbolInstanceFromType(SymbolType.BAR, 1, 1), 
-                createSymbolInstanceFromType(SymbolType.BAR, 1, 2), 
-                createSymbolInstanceFromType(SymbolType.BAR, 1, 3)
+                createSymbolInstanceFromType(SymbolType.GRAPE, 1, 1), 
+                createSymbolInstanceFromType(SymbolType.GRAPE, 1, 2), 
+                createSymbolInstanceFromType(SymbolType.GRAPE, 1, 3)
             ],
         ])
     });
@@ -81,19 +81,19 @@ describe('Check Symbols Match (checkSymbolsMatch)', () => {
     it('should find matching symbols with empty', () => {
         const board = [
             [
-                createSymbolInstanceFromType(SymbolType.BAR, 1, 1), 
+                createSymbolInstanceFromType(SymbolType.GRAPE, 1, 1), 
                 createSymbolInstanceFromType(SymbolType.CHERRY, 1, 2), 
-                createSymbolInstanceFromType(SymbolType.BAR, 1, 3)
+                createSymbolInstanceFromType(SymbolType.GRAPE, 1, 3)
             ],
             [
                 createSymbolInstanceFromType(SymbolType.LEMON, 2, 1), 
-                createSymbolInstanceFromType(SymbolType.BAR, 2, 2), 
+                createSymbolInstanceFromType(SymbolType.GRAPE, 2, 2), 
                 createSymbolInstanceFromType(SymbolType.LEMON, 2, 3)
             ],
             [
-                createSymbolInstanceFromType(SymbolType.BAR, 3, 1), 
+                createSymbolInstanceFromType(SymbolType.GRAPE, 3, 1), 
                 createSymbolInstanceFromType(SymbolType.CHERRY, 3, 2), 
-                createSymbolInstanceFromType(SymbolType.BAR, 3, 3)
+                createSymbolInstanceFromType(SymbolType.GRAPE, 3, 3)
             ],            
         ]
 
@@ -103,16 +103,43 @@ describe('Check Symbols Match (checkSymbolsMatch)', () => {
         expect(matches.length).toBe(1)
         expect(matches).toStrictEqual([
             [
-                createSymbolInstanceFromType(SymbolType.BAR, 1, 1),
-                createSymbolInstanceFromType(SymbolType.BAR, 1, 3), 
-                createSymbolInstanceFromType(SymbolType.BAR, 2, 2),
-                createSymbolInstanceFromType(SymbolType.BAR, 3, 1), 
-                createSymbolInstanceFromType(SymbolType.BAR, 3, 3), 
+                createSymbolInstanceFromType(SymbolType.GRAPE, 1, 1),
+                createSymbolInstanceFromType(SymbolType.GRAPE, 1, 3), 
+                createSymbolInstanceFromType(SymbolType.GRAPE, 2, 2),
+                createSymbolInstanceFromType(SymbolType.GRAPE, 3, 1), 
+                createSymbolInstanceFromType(SymbolType.GRAPE, 3, 3), 
             ],
         ])
     });    
 
     
+
+});
+
+describe('Check generate board based on multiplier', () => {
+
+    it('should generate a board with at least one winning combination', () => {
+        const board = [
+            [
+                createSymbolInstanceFromType(SymbolType.GRAPE, 1, 1), 
+                createSymbolInstanceFromType(SymbolType.GRAPE, 1, 2), 
+                createSymbolInstanceFromType(SymbolType.GRAPE, 1, 3)
+            ],
+            [
+                createSymbolInstanceFromType(SymbolType.LEMON, 2, 1), 
+                createSymbolInstanceFromType(SymbolType.CHERRY, 2, 2), 
+                createSymbolInstanceFromType(SymbolType.LEMON, 2, 3)
+            ],
+            [
+                createSymbolInstanceFromType(SymbolType.GRAPE, 3, 1), 
+                createSymbolInstanceFromType(SymbolType.CHERRY, 3, 2), 
+                createSymbolInstanceFromType(SymbolType.GRAPE, 3, 3)
+            ],            
+        ]
+
+        const winnings = detectWins(board);
+        expect(winnings.length).toBe(1);
+    });``
 
 });
 
@@ -122,9 +149,9 @@ describe('Check Winning Patterns', () => {
 
 
         const board = [
-            [SymbolType.BAR,    SymbolType.BAR,     SymbolType.BAR,     SymbolType.LEMON,   SymbolType.SEVEN],
-            [SymbolType.LEMON,  SymbolType.CHERRY,  SymbolType.LEMON,   SymbolType.LEMON,   SymbolType.BAR],
-            [SymbolType.LEMON,  SymbolType.BELL,    SymbolType.LEMON,   SymbolType.ORANGE,  SymbolType.BELL],
+            [SymbolType.GRAPE,    SymbolType.GRAPE,     SymbolType.GRAPE,     SymbolType.LEMON,   SymbolType.PINEAPPLE],
+            [SymbolType.LEMON,  SymbolType.CHERRY,  SymbolType.LEMON,   SymbolType.LEMON,   SymbolType.GRAPE],
+            [SymbolType.LEMON,  SymbolType.CHERRY,    SymbolType.LEMON,   SymbolType.ORANGE,  SymbolType.CHERRY],
         ].map((row, rowIndex) =>
             row.map((symbolType, colIndex) => createSymbolInstanceFromType(symbolType, rowIndex + 1, colIndex + 1))
         );
@@ -133,7 +160,7 @@ describe('Check Winning Patterns', () => {
         expect(winnings.length).toBe(1);
         expect(winnings[0].pattern.type).toBe(WinCombinationType.THREE_ACROSS);
         winnings[0].symbols.forEach(symbol => {
-            expect(symbol.symbol.type).toBe(SymbolType.BAR);
+            expect(symbol.symbol.type).toBe(SymbolType.GRAPE);
         });
 
     });
@@ -142,9 +169,9 @@ describe('Check Winning Patterns', () => {
 
 
         const board = [
-            [SymbolType.BAR,    SymbolType.BAR,     SymbolType.BAR,     SymbolType.LEMON,   SymbolType.SEVEN],
-            [SymbolType.LEMON,  SymbolType.CHERRY,  SymbolType.CHERRY,   SymbolType.CHERRY,   SymbolType.BAR],
-            [SymbolType.LEMON,  SymbolType.BELL,    SymbolType.LEMON,   SymbolType.ORANGE,  SymbolType.BELL],
+            [SymbolType.GRAPE,    SymbolType.GRAPE,     SymbolType.GRAPE,     SymbolType.LEMON,   SymbolType.PINEAPPLE],
+            [SymbolType.LEMON,  SymbolType.CHERRY,  SymbolType.CHERRY,   SymbolType.CHERRY,   SymbolType.GRAPE],
+            [SymbolType.LEMON,  SymbolType.CHERRY,    SymbolType.LEMON,   SymbolType.ORANGE,  SymbolType.CHERRY],
         ].map((row, rowIndex) =>
             row.map((symbolType, colIndex) => createSymbolInstanceFromType(symbolType, rowIndex + 1, colIndex + 1))
         );
@@ -154,7 +181,7 @@ describe('Check Winning Patterns', () => {
 
         expect(winnings[0].pattern.type).toBe(WinCombinationType.THREE_ACROSS);
         winnings[0].symbols.forEach(symbol => {
-            expect(symbol.symbol.type).toBe(SymbolType.BAR);
+            expect(symbol.symbol.type).toBe(SymbolType.GRAPE);
         });
 
         expect(winnings[1].pattern.type).toBe(WinCombinationType.THREE_ACROSS);
@@ -168,9 +195,9 @@ describe('Check Winning Patterns', () => {
 
 
         const board = [
-            [SymbolType.BAR,    SymbolType.CHERRY,     SymbolType.LEMON,     SymbolType.LEMON,   SymbolType.BELL],
-            [SymbolType.LEMON,  SymbolType.CHERRY,  SymbolType.ORANGE,   SymbolType.CHERRY,   SymbolType.BELL],
-            [SymbolType.LEMON,  SymbolType.CHERRY,    SymbolType.LEMON,   SymbolType.ORANGE,  SymbolType.BELL],
+            [SymbolType.GRAPE,    SymbolType.CHERRY,     SymbolType.LEMON,     SymbolType.LEMON,   SymbolType.CHERRY],
+            [SymbolType.LEMON,  SymbolType.CHERRY,  SymbolType.ORANGE,   SymbolType.CHERRY,   SymbolType.CHERRY],
+            [SymbolType.LEMON,  SymbolType.CHERRY,    SymbolType.LEMON,   SymbolType.ORANGE,  SymbolType.CHERRY],
         ].map((row, rowIndex) =>
             row.map((symbolType, colIndex) => createSymbolInstanceFromType(symbolType, rowIndex + 1, colIndex + 1))
         );
@@ -185,7 +212,7 @@ describe('Check Winning Patterns', () => {
 
         expect(winnings[1].pattern.type).toBe(WinCombinationType.THREE_DOWN);
         winnings[1].symbols.forEach(symbol => {
-            expect(symbol.symbol.type).toBe(SymbolType.BELL);
+            expect(symbol.symbol.type).toBe(SymbolType.CHERRY);
         });
 
     });       
@@ -194,9 +221,9 @@ describe('Check Winning Patterns', () => {
 
 
         const board = [
-            [SymbolType.BAR,    SymbolType.ORANGE,     SymbolType.LEMON,     SymbolType.LEMON,   SymbolType.BELL],
-            [SymbolType.LEMON,  SymbolType.BAR,  SymbolType.ORANGE,   SymbolType.CHERRY,   SymbolType.BELL],
-            [SymbolType.LEMON,  SymbolType.CHERRY,    SymbolType.BAR,   SymbolType.ORANGE,  SymbolType.CHERRY],
+            [SymbolType.GRAPE,    SymbolType.ORANGE,     SymbolType.LEMON,     SymbolType.LEMON,   SymbolType.CHERRY],
+            [SymbolType.LEMON,  SymbolType.GRAPE,  SymbolType.ORANGE,   SymbolType.CHERRY,   SymbolType.CHERRY],
+            [SymbolType.LEMON,  SymbolType.CHERRY,    SymbolType.GRAPE,   SymbolType.ORANGE,  SymbolType.CHERRY],
         ].map((row, rowIndex) =>
             row.map((symbolType, colIndex) => createSymbolInstanceFromType(symbolType, rowIndex + 1, colIndex + 1))
         );
@@ -206,7 +233,7 @@ describe('Check Winning Patterns', () => {
 
         expect(winnings[0].pattern.type).toBe(WinCombinationType.THREE_DIAGONAL);
         winnings[0].symbols.forEach(symbol => {
-            expect(symbol.symbol.type).toBe(SymbolType.BAR);
+            expect(symbol.symbol.type).toBe(SymbolType.GRAPE);
         });
 
         expect(winnings[1].pattern.type).toBe(WinCombinationType.THREE_DIAGONAL);
@@ -220,9 +247,9 @@ describe('Check Winning Patterns', () => {
 
 
         const board = [
-            [SymbolType.BAR,    SymbolType.BAR,     SymbolType.BAR,     SymbolType.BAR,   SymbolType.SEVEN],
-            [SymbolType.LEMON,  SymbolType.CHERRY,  SymbolType.LEMON,   SymbolType.LEMON,   SymbolType.BAR],
-            [SymbolType.LEMON,  SymbolType.LEMON,    SymbolType.LEMON,   SymbolType.LEMON,  SymbolType.BELL],
+            [SymbolType.GRAPE,    SymbolType.GRAPE,     SymbolType.GRAPE,     SymbolType.GRAPE,   SymbolType.PINEAPPLE],
+            [SymbolType.LEMON,  SymbolType.CHERRY,  SymbolType.LEMON,   SymbolType.LEMON,   SymbolType.GRAPE],
+            [SymbolType.LEMON,  SymbolType.LEMON,    SymbolType.LEMON,   SymbolType.LEMON,  SymbolType.CHERRY],
         ].map((row, rowIndex) =>
             row.map((symbolType, colIndex) => createSymbolInstanceFromType(symbolType, rowIndex + 1, colIndex + 1))
         );
@@ -230,7 +257,7 @@ describe('Check Winning Patterns', () => {
         const winnings = detectWinningCombinations(board);
         const winningPatternTypes = winnings.map(winning => [winning.pattern.type, winning.symbols[0].symbol.type]);
 
-        expect(winningPatternTypes).toContainEqual([WinCombinationType.FOUR_ACROSS, SymbolType.BAR]);
+        expect(winningPatternTypes).toContainEqual([WinCombinationType.FOUR_ACROSS, SymbolType.GRAPE]);
         expect(winningPatternTypes).toContainEqual([WinCombinationType.FOUR_ACROSS, SymbolType.LEMON]);
 
     });
@@ -239,8 +266,8 @@ describe('Check Winning Patterns', () => {
 
 
         const board = [
-            [SymbolType.BAR,    SymbolType.BAR,     SymbolType.BAR,     SymbolType.BAR,   SymbolType.BAR],
-            [SymbolType.LEMON,  SymbolType.CHERRY,  SymbolType.LEMON,   SymbolType.LEMON,   SymbolType.BAR],
+            [SymbolType.GRAPE,    SymbolType.GRAPE,     SymbolType.GRAPE,     SymbolType.GRAPE,   SymbolType.GRAPE],
+            [SymbolType.LEMON,  SymbolType.CHERRY,  SymbolType.LEMON,   SymbolType.LEMON,   SymbolType.GRAPE],
             [SymbolType.LEMON,  SymbolType.LEMON,    SymbolType.LEMON,   SymbolType.LEMON,  SymbolType.LEMON],
         ].map((row, rowIndex) =>
             row.map((symbolType, colIndex) => createSymbolInstanceFromType(symbolType, rowIndex + 1, colIndex + 1))
@@ -248,7 +275,7 @@ describe('Check Winning Patterns', () => {
 
         const winnings = detectWinningCombinations(board);
         const winningPatternTypes = winnings.map(winning => [winning.pattern.type, winning.symbols[0].symbol.type]);
-        expect(winningPatternTypes).toContainEqual([WinCombinationType.FIVE_ACROSS, SymbolType.BAR]);
+        expect(winningPatternTypes).toContainEqual([WinCombinationType.FIVE_ACROSS, SymbolType.GRAPE]);
         expect(winningPatternTypes).toContainEqual([WinCombinationType.FIVE_ACROSS, SymbolType.LEMON]);
 
     });     
@@ -257,16 +284,16 @@ describe('Check Winning Patterns', () => {
 
 
         const board = [
-            [SymbolType.BAR,    SymbolType.CHERRY,     SymbolType.BAR,     SymbolType.BAR,   SymbolType.CHERRY],
-            [SymbolType.LEMON,  SymbolType.BAR,  SymbolType.LEMON,   SymbolType.LEMON,   SymbolType.BAR],
-            [SymbolType.BAR,  SymbolType.LEMON,    SymbolType.BAR,   SymbolType.LEMON,  SymbolType.LEMON],
+            [SymbolType.GRAPE,    SymbolType.CHERRY,     SymbolType.GRAPE,     SymbolType.GRAPE,   SymbolType.CHERRY],
+            [SymbolType.LEMON,  SymbolType.GRAPE,  SymbolType.LEMON,   SymbolType.LEMON,   SymbolType.GRAPE],
+            [SymbolType.GRAPE,  SymbolType.LEMON,    SymbolType.GRAPE,   SymbolType.LEMON,  SymbolType.LEMON],
         ].map((row, rowIndex) =>
             row.map((symbolType, colIndex) => createSymbolInstanceFromType(symbolType, rowIndex + 1, colIndex + 1))
         );
 
         const winnings = detectWinningCombinations(board);
         const winningPatternTypes = winnings.map(winning => [winning.pattern.type, winning.symbols[0].symbol.type]);
-        expect(winningPatternTypes).toContainEqual([WinCombinationType.FIVE_MIRRORED_DIAGONAL, SymbolType.BAR]);
+        expect(winningPatternTypes).toContainEqual([WinCombinationType.FIVE_MIRRORED_DIAGONAL, SymbolType.GRAPE]);
 
     });
 
@@ -274,9 +301,9 @@ describe('Check Winning Patterns', () => {
 
 
         const board = [
-            [SymbolType.BAR,    SymbolType.BAR,   SymbolType.BAR,     SymbolType.BAR,   SymbolType.BAR],
-            [SymbolType.BAR,  SymbolType.BAR,  SymbolType.BAR,   SymbolType.BAR,   SymbolType.BAR],
-            [SymbolType.BAR,  SymbolType.BAR,    SymbolType.BAR,   SymbolType.BAR,  SymbolType.BAR],
+            [SymbolType.GRAPE,    SymbolType.GRAPE,   SymbolType.GRAPE,     SymbolType.GRAPE,   SymbolType.GRAPE],
+            [SymbolType.GRAPE,  SymbolType.GRAPE,  SymbolType.GRAPE,   SymbolType.GRAPE,   SymbolType.GRAPE],
+            [SymbolType.GRAPE,  SymbolType.GRAPE,    SymbolType.GRAPE,   SymbolType.GRAPE,  SymbolType.GRAPE],
         ].map((row, rowIndex) =>
             row.map((symbolType, colIndex) => createSymbolInstanceFromType(symbolType, rowIndex + 1, colIndex + 1))
         );

@@ -1,4 +1,4 @@
-import { Assets } from 'pixi.js';
+import { Assets, Spritesheet } from 'pixi.js';
 import { SYMBOLS_ARRAY } from './core/symbols';
 import { sound } from '@pixi/sound';
 
@@ -55,8 +55,16 @@ export function loadAllAssets(): Promise<{ asset: { src: string; alias: string; 
         }
     ]
     
+    const animationAssets = [
+        {
+            src: 'assets/animation/gold_anim.json',
+            alias: 'goldAnim'
+        }
+    ];
+
     const allAssets = [...symbolsAssets,
-        ...uiAssets
+        ...uiAssets,
+        ...animationAssets
     ];
 
     const loadPromises = allAssets.map(asset => {
