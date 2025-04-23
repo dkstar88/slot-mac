@@ -3,7 +3,7 @@ import { sliceArray, checkSymbolsMatch, detectWins, detectWinningCombinations } 
 import { createSymbolInstanceFromType, SYMBOLS } from '../../src/core/symbols';
 import { SymbolType } from '../../src/types/symbols';
 import { WinCombinationType } from '../../src/types/winning-combinations';
-
+import { generateRandomBoard } from '../../src/core/board';
 
 describe('Slicing Array', () => {
 
@@ -119,27 +119,18 @@ describe('Check Symbols Match (checkSymbolsMatch)', () => {
 describe('Check generate board based on multiplier', () => {
 
     it('should generate a board with at least one winning combination', () => {
-        const board = [
-            [
-                createSymbolInstanceFromType(SymbolType.GRAPE, 1, 1), 
-                createSymbolInstanceFromType(SymbolType.GRAPE, 1, 2), 
-                createSymbolInstanceFromType(SymbolType.GRAPE, 1, 3)
-            ],
-            [
-                createSymbolInstanceFromType(SymbolType.LEMON, 2, 1), 
-                createSymbolInstanceFromType(SymbolType.CHERRY, 2, 2), 
-                createSymbolInstanceFromType(SymbolType.LEMON, 2, 3)
-            ],
-            [
-                createSymbolInstanceFromType(SymbolType.GRAPE, 3, 1), 
-                createSymbolInstanceFromType(SymbolType.CHERRY, 3, 2), 
-                createSymbolInstanceFromType(SymbolType.GRAPE, 3, 3)
-            ],            
-        ]
+        const board = generateRandomBoard(3, 5, 1)
 
         const winnings = detectWins(board);
-        expect(winnings.length).toBe(1);
-    });``
+        expect(winnings.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should generate a board with at least 5 winning combination', () => {
+        const board = generateRandomBoard(3, 5, 1, 5)
+
+        const winnings = detectWins(board);
+        expect(winnings.length).toBeGreaterThanOrEqual(5);
+    });
 
 });
 
@@ -222,7 +213,7 @@ describe('Check Winning Patterns', () => {
 
         const board = [
             [SymbolType.GRAPE,    SymbolType.ORANGE,     SymbolType.LEMON,     SymbolType.LEMON,   SymbolType.CHERRY],
-            [SymbolType.LEMON,  SymbolType.GRAPE,  SymbolType.ORANGE,   SymbolType.CHERRY,   SymbolType.CHERRY],
+            [SymbolType.LEMON,  SymbolType.GRAPE,  SymbolType.ORANGE,   SymbolType.CHERRY,   SymbolType.PINEAPPLE],
             [SymbolType.LEMON,  SymbolType.CHERRY,    SymbolType.GRAPE,   SymbolType.ORANGE,  SymbolType.CHERRY],
         ].map((row, rowIndex) =>
             row.map((symbolType, colIndex) => createSymbolInstanceFromType(symbolType, rowIndex + 1, colIndex + 1))

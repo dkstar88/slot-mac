@@ -53,13 +53,13 @@ export interface SymbolInstance {
 /**
  * Interface representing a reel in the slot machine
  */
-export interface Reel {
-  /** The symbols currently visible on this reel */
-  visibleSymbols: SymbolInstance[];
+// export interface Reel {
+//   /** The symbols currently visible on this reel */
+//   visibleSymbols: SymbolInstance[];
   
-  /** Whether the reel is currently spinning */
-  isSpinning: boolean;
+//   /** Whether the reel is currently spinning */
+//   isSpinning: boolean;
   
-  /** The speed at which the reel is spinning */
-  spinSpeed: number;
-}
+//   /** The speed at which the reel is spinning */
+//   spinSpeed: number;
+// }

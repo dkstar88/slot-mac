@@ -23,35 +23,35 @@ export const SYMBOLS: Record<SymbolType, Symbol> = {
     emoji: '🍓',
     name: SymbolType.STRAWBERRY,
     payoutValue: 8,
-    rarityWeight: 3
+    rarityWeight: 5
   },
   [SymbolType.WATERMELON]: {
     type: SymbolType.WATERMELON,
     emoji: '🍉',
     name: 'Watermelon',
     payoutValue: 5,
-    rarityWeight: 5
+    rarityWeight: 7
   },
   [SymbolType.ORANGE]: {
     type: SymbolType.ORANGE,
     name: 'Orange',
     emoji: '🍊',
     payoutValue: 3,
-    rarityWeight: 8
+    rarityWeight: 7
   },
   [SymbolType.LEMON]: {
     type: SymbolType.LEMON,
     name: 'Lemon',
     emoji: '🍋',
     payoutValue: 2,
-    rarityWeight: 13
+    rarityWeight: 8
   },
   [SymbolType.CHERRY]: {
     type: SymbolType.CHERRY,
     name: 'Cherry',
     emoji: '🍒',
     payoutValue: 1,
-    rarityWeight: 21 // Most common
+    rarityWeight: 8 // Most common
   }
 };
 
