@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { Reel, ReelConfig } from './Reel';
 import { SymbolInstance } from '../types/symbols';
-import { GameEventType } from '../types/events';
+import { GameEventType, WinDetectedEvent } from '../types/events';
 import { eventManager, publishEvent } from '../utils/event-system';
 import { detectWinningCombinations, transformBoardSymbolsToMatrix } from '../core/winning-patterns';
 import { sound } from '@pixi/sound';
@@ -158,8 +158,26 @@ export class GameBoard extends PIXI.Container {
     eventManager.subscribe(GameEventType.SPIN_BUTTON_CLICKED, (event: any) => {
       this.initSymbols();
     })
+    eventManager.subscribe(GameEventType.WIN_DETECTED, (event: WinDetectedEvent) => {
+      
+      this.onWinDetected(event.pattern, event.symbols);
+    }
+
+    )
+
   }
   
+  private onWinDetected(pattern: any, symbols: SymbolInstance[]): void {
+    console.log("GameBoard: Win detected", pattern, symbols);
+    // Highlight winning symbols 
+    this.clearWinningHighlights();
+
+    // Play win sound
+    sound.play("win");
+
+    this.highlightWinningSymbols(symbols);
+
+  }
   /**
    * Handle reel stopped event
    * @param reelIndex Index of the reel that stopped
@@ -218,23 +236,6 @@ export class GameBoard extends PIXI.Container {
     }
   }
   
-  // /**
-  //  * Stop spinning the reels
-  //  * @param targetSymbols Optional target symbols for each reel
-  //  */
-  // public stopSpin(targetSymbols?: Symbol[][]): void {
-  //   if (!this.isSpinning) return;
-    
-  //   // Stop each reel
-  //   for (let i = 0; i < this.reels.length; i++) {
-  //     const reel = this.reels[i];
-  //     const reelTargetSymbols = targetSymbols ? targetSymbols[i] : undefined;
-      
-  //     // Stop the reel
-  //     reel.stopSpin(reelTargetSymbols);
-  //   }
-  // }
-  
   /**
    * Detect winning combinations
    */
@@ -255,19 +256,20 @@ export class GameBoard extends PIXI.Container {
       // Collect all winning symbols
       const winningSymbols: SymbolInstance[] = [];
 
-      for (const { symbols } of winningCombinations) {
+      for (const { pattern, symbols } of winningCombinations) {
    
         winningSymbols.push(...symbols);
         // console.log("GameBoard: Winning symbols detected", symbols);
         // Publish win detected event
         publishEvent(GameEventType.WIN_DETECTED, {
-          pattern: { type: 'win' } as any, // This would be the actual pattern type
+          pattern: pattern, // This would be the actual pattern type
           symbols
         });
       }
       
       // Highlight winning symbols
-      this.highlightWinningSymbols(winningSymbols);
+      // moved to event loop
+      // this.highlightWinningSymbols(winningSymbols);
     }
   }
   
