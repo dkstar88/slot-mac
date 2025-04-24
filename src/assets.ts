@@ -1,13 +1,13 @@
-import { Assets, Spritesheet } from 'pixi.js';
-import { SYMBOLS_ARRAY } from './core/symbols';
+import { Assets } from 'pixi.js';
+import { GLYPHS_ARRAY } from './core/glyphs';
 import { sound } from '@pixi/sound';
 
 export function loadAllAssets(): Promise<{ asset: { src: string; alias: string; }; texture: any; success: boolean; } | { asset: { src: string; alias: string; }; error: any; success: boolean; }>[]
 {
-    const symbolsAssets = SYMBOLS_ARRAY.map(symbol => {
+    const glyphsAssets = GLYPHS_ARRAY.map(glyph => {
         return {
-          src: `assets/symbols/${symbol.type}.png`,
-          alias: symbol.type
+          src: `assets/symbols/${glyph.type}.png`,
+          alias: glyph.type
         };
       });
     const soundsAssets = [
@@ -39,6 +39,10 @@ export function loadAllAssets(): Promise<{ asset: { src: string; alias: string; 
             src: 'assets/sound/insert.mp3',
             alias: 'insert'
         },        
+        {
+            src: 'assets/sound/win.wav',
+            alias: 'win'
+        },            
     ];
     const uiAssets = [
         {
@@ -62,7 +66,7 @@ export function loadAllAssets(): Promise<{ asset: { src: string; alias: string; 
         }
     ];
 
-    const allAssets = [...symbolsAssets,
+    const allAssets = [...glyphsAssets,
         ...uiAssets,
         ...animationAssets
     ];

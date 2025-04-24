@@ -1,4 +1,4 @@
-import { SymbolInstance } from './symbols';
+import { GlyphInstance } from './glyphs';
 
 /**
  * Enum representing the different types of winning combinations
@@ -34,7 +34,7 @@ export interface WinningPattern {
   // coordinates: number[][];
   
   /** Function to check if the pattern is matched on the board */
-  checkMatch(board: SymbolInstance[][]): IterableIterator<SymbolInstance[]>;
+  checkMatch(board: GlyphInstance[][]): IterableIterator<GlyphInstance[]>;
 }
 
 /**
@@ -49,9 +49,9 @@ export interface WinningCombinationsDetector {
    * @param board The current state of the game board
    * @returns Array of winning combinations
    */
-  detectWinningCombinations(board: SymbolInstance[][]): {
+  detectWinningCombinations(board: GlyphInstance[][]): {
     pattern: WinningPattern;
-    symbols: SymbolInstance[];
+    symbols: GlyphInstance[];
   }[];
   
   /**
@@ -63,7 +63,7 @@ export interface WinningCombinationsDetector {
   calculatePayout(
     winningCombinations: {
       pattern: WinningPattern;
-      symbols: SymbolInstance[];
+      symbols: GlyphInstance[];
     }[],
     currentMultiplier: number
   ): number;
@@ -76,7 +76,7 @@ export interface WinningCombinationsDetector {
   determineMultiplierIncrease(
     winningCombinations: {
       pattern: WinningPattern;
-      symbols: SymbolInstance[];
+      symbols: GlyphInstance[];
     }[]
   ): number | null;
 }

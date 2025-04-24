@@ -1,4 +1,4 @@
-import { SymbolInstance } from './symbols';
+import { GlyphInstance } from './glyphs';
 
 /**
  * Enum representing the different states of the game
@@ -32,7 +32,7 @@ export interface PlayerStats {
  */
 export interface Win {
   /** The symbols that are part of this win */
-  symbols: SymbolInstance[];
+  symbols: GlyphInstance[];
   
   /** The type of winning combination */
   combinationType: string;
@@ -52,7 +52,7 @@ export interface Win {
  */
 export interface SpinResult {
   /** All symbols on the board after the spin */
-  boardSymbols: SymbolInstance[][];
+  boardSymbols: GlyphInstance[][];
   
   /** All winning combinations from this spin */
   wins: Win[];

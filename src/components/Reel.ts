@@ -1,10 +1,11 @@
 import * as PIXI from 'pixi.js';
 import { BlurFilter } from 'pixi.js';
-import type { Symbol, SymbolInstance } from '../types/symbols';
-import { getRandomSymbol, createSymbolInstance } from '../core/symbols';
+import type { Glyph, GlyphInstance } from '../types/glyphs';
+import { getRandomGlyph, createGlyphInstance } from '../core/glyphs';
 import { GameEventType } from '../types/events';
 import { publishEvent } from '../utils/event-system';
-import { SymbolContainer } from './SymbolContainer';
+import { GlyphContainer } from './GlyphContainer';
+import { TweenManager } from '../utils/tween';
 /**
  * Configuration for the reel
  */
@@ -19,10 +20,10 @@ export interface ReelConfig {
   visibleSymbols: number;
   
   /** Size of each symbol */
-  symbolSize: number;
+  glyphSize: number;
   
   /** Spacing between symbols */
-  symbolSpacing: number;
+  glyphSpacing: number;
   
   spinSpeed: number;
   /** Duration of the spin animation in milliseconds */
@@ -45,8 +46,8 @@ const DEFAULT_CONFIG: ReelConfig = {
   width: 100,
   height: 300,
   visibleSymbols: 3,
-  symbolSize: 100,
-  symbolSpacing: 0,
+  glyphSize: 100,
+  glyphSpacing: 0,
   spinSpeed: 4,
   spinDuration: 3000,
   spinStartDelay: 50,
@@ -65,13 +66,13 @@ export class Reel extends PIXI.Container {
   private config: ReelConfig;
   
   /** Container for the symbols */
-  private symbolsContainer: PIXI.Container;
+  private glyphsContainer: PIXI.Container;
   
   /** Mask for the symbols container */
-  public symbolsMask: PIXI.Graphics;
+  public glyphsMask: PIXI.Graphics;
   
   /** Array of symbol instances */
-  private symbols: SymbolInstance[] = [];
+  private glyphs: GlyphInstance[] = [];
   
   /** Whether the reel is currently spinning */
   private isSpinning: boolean = false;
@@ -89,10 +90,10 @@ export class Reel extends PIXI.Container {
   private reelIndex: number;
   
   /** Extra symbols to add above and below the visible area */
-  private extraSymbols: number = 5;
+  private extraGlyphs: number = 5;
   
-  /** Tweening objects for animation */
-  private tweening: any[] = [];
+  /** Tween for animation */
+  private tweenManager: TweenManager | null = null;
 
 
   /**
@@ -106,6 +107,7 @@ export class Reel extends PIXI.Container {
     this.reelIndex = reelIndex;
     this.config = { ...DEFAULT_CONFIG, ...config };
 
+    this.tweenManager = new TweenManager();
         
     const shadowed = new PIXI.Sprite(
       {
@@ -118,25 +120,25 @@ export class Reel extends PIXI.Container {
     this.addChild(shadowed);
         
     // Create container for symbols
-    this.symbolsContainer = new PIXI.Container();
-    this.addChild(this.symbolsContainer);
+    this.glyphsContainer = new PIXI.Container();
+    this.addChild(this.glyphsContainer);
     
 
         
     // Create mask
-    this.symbolsMask = new PIXI.Graphics();
-    this.symbolsMask.rect(0, 0, this.config.width, this.config.height).fill(0xffffff);
-    this.addChild(this.symbolsMask);
+    this.glyphsMask = new PIXI.Graphics();
+    this.glyphsMask.rect(0, 0, this.config.width, this.config.height).fill(0xffffff);
+    this.addChild(this.glyphsMask);
 
 
     // Apply mask to symbols container
-    this.symbolsContainer.mask = this.symbolsMask;
+    this.glyphsContainer.mask = this.glyphsMask;
     
     // Create blur filter
     this.blurFilter = new BlurFilter();
     this.blurFilter.blurX = 0;
     this.blurFilter.blurY = 0;
-    this.symbolsContainer.filters = [this.blurFilter];
+    this.glyphsContainer.filters = [this.blurFilter];
     
     // Initialize symbols
     this.initSymbols();
@@ -150,35 +152,35 @@ export class Reel extends PIXI.Container {
    */
   private initSymbols(): void {
     // Clear existing symbols
-    this.symbolsContainer.removeChildren();
-    this.symbols = [];
+    this.glyphsContainer.removeChildren();
+    this.glyphs = [];
     
     // Calculate total number of symbols (visible + extra)
-    const totalSymbols = this.config.visibleSymbols + this.extraSymbols;
+    const totalSymbols = this.config.visibleSymbols + this.extraGlyphs;
     
     // Create symbols
     for (let i = 0; i < totalSymbols; i++) {
       // Create symbol instance
-      const symbol = getRandomSymbol();
-      const symbolInstance = createSymbolInstance(symbol, i, this.reelIndex);
+      const symbol = getRandomGlyph();
+      const symbolInstance = createGlyphInstance(symbol, i, this.reelIndex);
       
       // Create symbol container
-      const symbolContainer = new SymbolContainer({ size: this.config.symbolSize, symbol: symbolInstance.symbol.type });
+      const symbolContainer = new GlyphContainer({ size: this.config.glyphSize, symbol: symbolInstance.glyph.type });
       
       // Position symbol
-      symbolContainer.position.y = i * (this.config.symbolSize + this.config.symbolSpacing);
+      symbolContainer.position.y = i * (this.config.glyphSize + this.config.glyphSpacing);
       symbolContainer.setText('' + i)
       
       // Add to container
-      this.symbolsContainer.addChild(symbolContainer);
+      this.glyphsContainer.addChild(symbolContainer);
       
       // Add to symbols array
-      this.symbols.push(symbolInstance);
+      this.glyphs.push(symbolInstance);
 
     }
     
     // Position symbols container to show only visible symbols
-    this.symbolsContainer.position.y = (-this.extraSymbols+1) * (this.config.symbolSize + this.config.symbolSpacing);
+    this.glyphsContainer.position.y = (-this.extraGlyphs+1) * (this.config.glyphSize + this.config.glyphSpacing);
   }
   
   /**
@@ -201,21 +203,28 @@ export class Reel extends PIXI.Container {
     
     // Calculate target position
     // The target is current position plus a base amount, plus some extra based on reel index and random factor
-    const target = (this.extraSymbols + this.config.visibleSymbols) * this.config.spinSpeed - 3;
+    const target = (this.extraGlyphs + this.config.visibleSymbols) * this.config.spinSpeed - 3;
     
     // Calculate spin duration with some variety
     const time = 1500 + this.reelIndex * 600 + extra * 600;
-       
-    // Start the tween animation
-    this.tweenTo(
+    
+    // Stop any existing tween
+    this.tweenManager!.reset();
+    
+    this.tweenManager!.tween(
+      this,
+      time,
       'reelPosition',
       target,
-      time,
-      this.backout(0.2),
+      0,
+      this.tweenManager!.backout(0.8),
       undefined,
-      () => this.onSpinComplete()
+      () => {
+        // Animation complete
+        this.stopSpin();
+      }
     );
-    
+
   }
   
   /**
@@ -223,8 +232,6 @@ export class Reel extends PIXI.Container {
    * @param targetSymbols Symbols to show when the reel stops
    */
   public stopSpin(): void {
-
-
     /* TODO - REMOVE - Currently not working tween always complete at the right position, no need to scroll again */
 
     if (!this.isSpinning) return;
@@ -232,29 +239,28 @@ export class Reel extends PIXI.Container {
     console.log(`Reel ${this.reelIndex} stopSpin called`);
 
     // For immediate stop, we can cancel current tweens and create a new one with shorter duration
-    this.tweening = [];
+    this.tweenManager!.reset();
     
     // Calculate the nearest stopping point (complete symbol)
-    const symbolHeight = this.config.symbolSize + this.config.symbolSpacing;
-
+    const symbolHeight = this.config.glyphSize + this.config.glyphSpacing;
     const targetPosition = Math.ceil(this.reelPosition / symbolHeight) * symbolHeight;
 
     console.log(`Reel ${this.reelIndex} at ${this.reelPosition} stopping at position: ${targetPosition}`);
+    this.onSpinComplete();
     // Create a short tween to stop at the next symbol boundary
-    if (this.reelPosition != targetPosition) {
-      this.tweenTo(
-        'reelPosition',
-        targetPosition,
-        100 + this.config.spinStopDelay,
-        this.backout(0.8),
-        undefined,
-        () => this.onSpinComplete()
-      );
-    } else {
-      // If already at target position, call spin complete directly
-      this.onSpinComplete();
-    }
-
+    // if (this.reelPosition != targetPosition) {
+    //   this.currentTween = new Tween(this);
+    //   this.currentTween
+    //     .from({ reelPosition: this.reelPosition })
+    //     .to({ reelPosition: targetPosition });
+    //   this.currentTween.time = 100 + this.config.spinStopDelay;
+    //   this.currentTween.easing = Easing.backOut(0.8);
+    //   this.currentTween.on('end', () => this.onSpinComplete());
+    //   this.currentTween.start();
+    // } else {
+    //   // If already at target position, call spin complete directly
+    //   this.onSpinComplete();
+    // }
   }
   
   /**
@@ -278,7 +284,7 @@ export class Reel extends PIXI.Container {
    * Update method called on each tick
    * @param ticker The ticker instance
    */
-  private update(ticker: PIXI.Ticker): void {
+  private update(_: PIXI.Ticker): void {
     // Log first few updates to confirm ticker is working
     if (Reel.updateCount < 5) {
       Reel.updateCount++;
@@ -289,18 +295,15 @@ export class Reel extends PIXI.Container {
     this.previousReelPosition = this.reelPosition;
     
     // Update symbol positions on reel
-    const symbolHeight = this.config.symbolSize + this.config.symbolSpacing;
+    const symbolHeight = this.config.glyphSize + this.config.glyphSpacing;
     
-    for (let i = 0; i < this.symbols.length; i++) {
-      const symbolContainer = this.symbolsContainer.children[i] as SymbolContainer;
+    for (let i = 0; i < this.glyphs.length; i++) {
+      const symbolContainer = this.glyphsContainer.children[i] as GlyphContainer;
       
       // Calculate new position based on reel position
-      symbolContainer.position.y = ((this.reelPosition + i) % this.symbols.length) * symbolHeight - symbolHeight;
+      symbolContainer.position.y = ((this.reelPosition + i) % this.glyphs.length) * symbolHeight - symbolHeight;
+    }    
 
-    }
-    
-    // Update tweening animations
-    this.updateTweens();
   }
   
   /**
@@ -308,11 +311,11 @@ export class Reel extends PIXI.Container {
    */
   private resetSymbols(): void {
     // Store the visible symbols before resetting
-    const visibleSymbols = this.getTargetSymbols().map(s => s.symbol);
+    const visibleSymbols = this.getTargetSymbols().map(s => s.glyph);
     
     // Reset the position
-    const symbolHeight = this.config.symbolSize + this.config.symbolSpacing;
-    this.symbolsContainer.position.y = (-this.extraSymbols+1) * symbolHeight;
+    const symbolHeight = this.config.glyphSize + this.config.glyphSpacing;
+    this.glyphsContainer.position.y = (-this.extraGlyphs+1) * symbolHeight;
     
     // Reset position tracking
     this.reelPosition = 0;
@@ -322,11 +325,11 @@ export class Reel extends PIXI.Container {
     this.blurFilter.blurY = 0;
     
     // Clear existing symbols
-    this.symbolsContainer.removeChildren();
-    this.symbols = [];
+    this.glyphsContainer.removeChildren();
+    this.glyphs = [];
     
     // Calculate total number of symbols (visible + extra)
-    const totalSymbols = this.config.visibleSymbols + this.extraSymbols;
+    const totalSymbols = this.config.visibleSymbols + this.extraGlyphs;
     
     // Create symbols
     for (let i = 0; i < totalSymbols; i++) {
@@ -338,143 +341,59 @@ export class Reel extends PIXI.Container {
         symbol = visibleSymbols[visibleIndex];
       } else {
         // For non-visible positions, use random symbols
-        symbol = getRandomSymbol();
+        symbol = getRandomGlyph();
       }
       
       // Create symbol instance
-      const symbolInstance = createSymbolInstance(symbol, i, this.reelIndex);
+      const symbolInstance = createGlyphInstance(symbol, i, this.reelIndex);
       
       // Create symbol container
-      const symbolContainer = new SymbolContainer({ size: this.config.symbolSize, symbol: symbolInstance.symbol.type });
+      const symbolContainer = new GlyphContainer({ size: this.config.glyphSize, symbol: symbolInstance.glyph.type });
       
       // Position symbol
       symbolContainer.position.y = i * symbolHeight;
       symbolContainer.setText('' + i)
       // Add to container
-      this.symbolsContainer.addChild(symbolContainer);
+      this.glyphsContainer.addChild(symbolContainer);
       
       // Add to symbols array
-      this.symbols.push(symbolInstance);
+      this.glyphs.push(symbolInstance);
     }
     
     // this.getVisibleSymbols().map(s => s.symbol.type);
-  }
-  /**
-   * Tween a property to a target value
-   * @param property Property to tween
-   * @param target Target value
-   * @param time Duration in milliseconds
-   * @param easing Easing function
-   * @param onchange Callback on change
-   * @param oncomplete Callback on complete
-   */
-  private tweenTo(
-    property: 'reelPosition',
-    target: number,
-    time: number,
-    easing: (t: number) => number,
-    onchange?: ((tween: any) => void) | undefined,
-    oncomplete?: ((tween: any) => void) | undefined
-  ): void {
-    const tween = {
-      object: this,
-      property,
-      propertyBeginValue: this[property],
-      target,
-      easing,
-      time,
-      change: onchange,
-      complete: oncomplete,
-      start: Date.now(),
-    };
-    
-    this.tweening.push(tween);
-    
-    return;
-  }
-  
-  /**
-   * Update all active tweens
-   */
-  private updateTweens(): void {
-    if (this.tweening.length <= 0) {
-      return;
-    }
-    
-    const now = Date.now();
-    const remove = [];
-    
-    for (let i = 0; i < this.tweening.length; i++) {
-      const t = this.tweening[i];
-      const phase = Math.min(1, (now - t.start) / t.time);
-      
-      t.object[t.property] = this.lerp(t.propertyBeginValue, t.target, t.easing(phase));
-      
-      if (t.change) t.change(t);
-      
-      if (phase === 1) {
-        t.object[t.property] = t.target;
-        if (t.complete) t.complete(t);
-        remove.push(t);
-      }
-    }
-    
-    for (let i = 0; i < remove.length; i++) {
-      this.tweening.splice(this.tweening.indexOf(remove[i]), 1);
-    }
-  }
-  
-  /**
-   * Linear interpolation function
-   * @param a1 Start value
-   * @param a2 End value
-   * @param t Progress (0-1)
-   * @returns Interpolated value
-   */
-  private lerp(a1: number, a2: number, t: number): number {
-    return a1 * (1 - t) + a2 * t;
-  }
-  
-  /**
-   * Backout easing function
-   * @param amount Amount of backout
-   * @returns Easing function
-   */
-  private backout(amount: number): (t: number) => number {
-    return (t: number) => --t * t * ((amount + 1) * t + amount) + 1;
   }
   
   public getReelIndex(): number {
     return this.reelIndex;
   }
 
-  public getSymbols(): SymbolInstance[] {
-    return this.symbols;
+  public getSymbols(): GlyphInstance[] {
+    return this.glyphs;
   }
 
 
-  public getTargetSymbols(): SymbolInstance[] {
+  public getTargetSymbols(): GlyphInstance[] {
     // Get the target symbols (the ones that are currently visible)
-    const targetSymbols = this.symbols.slice(0, this.config.visibleSymbols);
+    const targetSymbols = this.glyphs.slice(0, this.config.visibleSymbols);
     return targetSymbols;
   }
   /**
    * Get the visible symbols
    * @returns Array of visible symbols
    */
-  public getVisibleSymbols(): SymbolInstance[] {
+  public getVisibleSymbols(): GlyphInstance[] {
     // Get Visible symbols visually container.y >= 200 && container.y <= 400
 
-    var result: SymbolInstance[] = new Array<SymbolInstance>(this.config.visibleSymbols);
-    const symbolHeight = this.config.symbolSize + this.config.symbolSpacing;
-    const topY = (this.extraSymbols-1) * symbolHeight;
-    const btmY = (this.config.visibleSymbols+this.extraSymbols-1) * symbolHeight;
+    var result: GlyphInstance[] = new Array<GlyphInstance>(this.config.visibleSymbols);
+    const symbolHeight = this.config.glyphSize + this.config.glyphSpacing;
+    const topY = (this.extraGlyphs-1) * symbolHeight;
+    const btmY = (this.config.visibleSymbols+this.extraGlyphs-1) * symbolHeight;
     
-    for (let i = 0; i < this.symbols.length; i++) {
-      const symbolContainer = this.symbolsContainer.children[i] as PIXI.Container;
+    for (let i = 0; i < this.glyphs.length; i++) {
+      const symbolContainer = this.glyphsContainer.children[i] as PIXI.Container;
       if (symbolContainer.position.y >= topY && symbolContainer.position.y < btmY) {        
         // Get a new random symbol
-        result[Math.floor(symbolContainer.position.y/symbolHeight)-this.extraSymbols+1] = this.symbols[i];
+        result[Math.floor(symbolContainer.position.y/symbolHeight)-this.extraGlyphs+1] = this.glyphs[i];
       }
     }
 
@@ -488,7 +407,7 @@ export class Reel extends PIXI.Container {
    * Set the visible symbols
    * @param symbols Symbols to set
    */
-  public setVisibleSymbols(symbols: Symbol[] | SymbolInstance[]): void {
+  public setVisibleSymbols(symbols: Glyph[] | GlyphInstance[]): void {
     if (symbols.length !== this.config.visibleSymbols) {
       throw new Error(`Expected ${this.config.visibleSymbols} symbols, got ${symbols.length}`);
     }
@@ -499,17 +418,17 @@ export class Reel extends PIXI.Container {
       const symbol = symbols[i];
       
       // Update the symbol instance
-      if (symbol instanceof Symbol) {
-        this.symbols[symbolIndex] = createSymbolInstance(symbol as Symbol, i, this.reelIndex);
+      if ('type' in symbol) {
+        this.glyphs[symbolIndex] = createGlyphInstance(symbol as Glyph, i, this.reelIndex);
       } else {
-        this.symbols[symbolIndex] = symbol as SymbolInstance;
+        this.glyphs[symbolIndex] = symbol as GlyphInstance;
       }
       
       // Update the symbol container
-      const symbolContainer = this.symbolsContainer.children[symbolIndex] as SymbolContainer;
-      symbolContainer.setSymbol(this.symbols[symbolIndex].symbol.type);
+      const symbolContainer = this.glyphsContainer.children[symbolIndex] as GlyphContainer;
+      symbolContainer.setSymbol(this.glyphs[symbolIndex].glyph.type);
       
-      console.log(`Reel ${this.reelIndex} setVisibleSymbols: ${symbolIndex} ${this.symbols[symbolIndex].symbol.emoji}`);
+      console.log(`Reel ${this.reelIndex} setVisibleSymbols: ${symbolIndex} ${this.glyphs[symbolIndex].glyph.emoji}`);
     }
   }
   
@@ -517,16 +436,16 @@ export class Reel extends PIXI.Container {
    * Highlight winning symbols
    * @param winningSymbols Array of winning symbols
    */
-  public highlightWinningSymbols(winningSymbols: SymbolInstance[]): void {
+  public highlightWinningSymbols(winningSymbols: GlyphInstance[]): void {
     
     // Check each visible symbol
-    for (let i = 0; i < this.symbols.length; i++) {
-      const symbolContainer = this.symbolsContainer.getChildAt(i) as SymbolContainer;
+    for (let i = 0; i < this.glyphs.length; i++) {
+      const symbolContainer = this.glyphsContainer.getChildAt(i) as GlyphContainer;
       
       // Check if this symbol is in the winning symbols
       const isWinning = winningSymbols.some(winningSymbol => 
-        winningSymbol.row === this.symbols[i].row && 
-        winningSymbol.column === this.symbols[i].column
+        winningSymbol.row === this.glyphs[i].row && 
+        winningSymbol.column === this.glyphs[i].column
       );
       
       // Highlight if winning
@@ -547,7 +466,7 @@ export class Reel extends PIXI.Container {
     // Clear highlights from each visible symbol
     for (let i = 0; i < visibleSymbols.length; i++) {
       const symbolIndex = i;
-      const symbolContainer = this.symbolsContainer.getChildAt(symbolIndex) as SymbolContainer;
+      const symbolContainer = this.glyphsContainer.getChildAt(symbolIndex) as GlyphContainer;
       symbolContainer.setIsHighlighted(false);
     }
   }

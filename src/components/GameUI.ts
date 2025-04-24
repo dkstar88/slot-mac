@@ -1,8 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { AnimatedSprite } from 'pixi.js';
 import { SpinButton } from './SpinButton';
-import { SYMBOLS_ARRAY } from '../core/symbols';
-import { Symbol } from '../types/symbols';
+import { GLYPHS_ARRAY } from '../core/glyphs';
 import { sound } from '@pixi/sound';
 import { GameEventType } from '../types/events';
 import { eventManager, publishEvent } from '../utils/event-system';
@@ -209,7 +208,7 @@ export class GameUI extends PIXI.Container {
     symbolsContainer.addChild(title);
     
     // Create grid of symbols
-    SYMBOLS_ARRAY.forEach((symbol, index) => {
+    GLYPHS_ARRAY.forEach((symbol, index) => {
       const yPos = 30 + (index * 20);
             
       // Create value text
@@ -407,7 +406,7 @@ export class GameUI extends PIXI.Container {
     const startTime = Date.now();
     
     // Use PixiJS ticker for animation
-    const animate = (ticker: PIXI.Ticker) => {
+    const animate = (_: PIXI.Ticker) => {
       const currentTime = Date.now();
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
@@ -575,7 +574,7 @@ export class GameUI extends PIXI.Container {
       const duration = 1000 + Math.random() * 1000; // Random duration
       
       // Use PixiJS ticker for animation
-      const animate = (ticker: PIXI.Ticker) => {
+      const animate = (_: PIXI.Ticker) => {
         const currentTime = Date.now();
         const elapsed = currentTime - startTime;
         const progress = elapsed / duration;

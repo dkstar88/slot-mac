@@ -1,5 +1,5 @@
 import { SpinResult } from './game-state';
-import { SymbolInstance } from './symbols';
+import { GlyphInstance } from './glyphs';
 import { WinningPattern } from './winning-combinations';
 
 /**
@@ -66,7 +66,7 @@ export interface ReelStoppedEvent extends GameEvent {
   reelIndex: number;
   
   /** Symbols on the stopped reel */
-  symbols: SymbolInstance[];
+  symbols: GlyphInstance[];
 }
 
 /**
@@ -76,7 +76,7 @@ export interface AllReelsStoppedEvent extends GameEvent {
   type: GameEventType.ALL_REELS_STOPPED;
   
   /** All symbols on the board */
-  boardSymbols: SymbolInstance[][];
+  boardSymbols: GlyphInstance[][];
 }
 
 /**
@@ -89,7 +89,7 @@ export interface WinDetectedEvent extends GameEvent {
   pattern: WinningPattern;
   
   /** The symbols that form the winning combination */
-  symbols: SymbolInstance[];
+  symbols: GlyphInstance[];
 }
 
 /**
@@ -101,7 +101,7 @@ export interface WinsEvaluatedEvent extends GameEvent {
   /** All winning combinations */
   wins: {
     pattern: WinningPattern;
-    symbols: SymbolInstance[];
+    symbols: GlyphInstance[];
   }[];
   
   /** Whether this spin resulted in a jackpot */

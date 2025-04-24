@@ -1,28 +1,28 @@
 import * as PIXI from 'pixi.js';
-import { SymbolType } from '../types/symbols';
+import { GlyphType } from '../types/glyphs';
 
 /**
- * Configuration for the game UI
+ * Configuration for the glyph container
  */
-export interface SymbolContainerConfig {
+export interface GlyphContainerConfig {
     size: number;
-    symbol: SymbolType;
+    symbol: GlyphType;
 }
 
-const DEFAULT_CONFIG: SymbolContainerConfig = {
+const DEFAULT_CONFIG: GlyphContainerConfig = {
     size: 100,
-    symbol: SymbolType.CHERRY,
+    symbol: GlyphType.CHERRY,
 };
 
-export class SymbolContainer extends PIXI.Container {
+export class GlyphContainer extends PIXI.Container {
  
-    private config: SymbolContainerConfig;
+    private config: GlyphContainerConfig;
     private symbolSprite!: PIXI.Sprite;
     private symbolText!: PIXI.Text;
     private highlight!: PIXI.Graphics;
     private isHighlighted: boolean = false;
 
-    constructor(config: Partial<SymbolContainerConfig> = {}) {
+    constructor(config: Partial<GlyphContainerConfig> = {}) {
         super();
         this.config = { ...DEFAULT_CONFIG, ...config };
         // Initialize UI elements
@@ -96,7 +96,7 @@ export class SymbolContainer extends PIXI.Container {
         return this.isHighlighted;
     }
 
-    public setSymbol(symbol: SymbolType) {
+    public setSymbol(symbol: GlyphType) {
         this.config.symbol = symbol;
         this.symbolSprite.texture = PIXI.Assets.get(symbol);
     }

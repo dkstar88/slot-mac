@@ -1,7 +1,7 @@
 /**
- * Enum representing the different symbol types in the game
+ * Enum representing the different glyph types in the game
  */
-export enum SymbolType {
+export enum GlyphType {
   PINEAPPLE = 'pineapple',
   GRAPE = 'grape',
   STRAWBERRY = 'strawberry',
@@ -14,30 +14,30 @@ export enum SymbolType {
 
 
 /**
- * Interface representing a symbol in the slot machine
+ * Interface representing a glyph in the slot machine
  */
-export interface Symbol {
-  /** Unique identifier for the symbol */
-  type: SymbolType;
+export interface Glyph {
+  /** Unique identifier for the glyph */
+  type: GlyphType;
   
-  /** Display name of the symbol */
+  /** Display name of the glyph */
   name: string;
   emoji: string;
   
  
-  /** Base payout value for this symbol */
+  /** Base payout value for this glyph */
   payoutValue: number;
   
-  /** Weight determining how frequently this symbol appears (higher = more common) */
+  /** Weight determining how frequently this glyph appears (higher = more common) */
   rarityWeight: number;
 }
 
 /**
- * Interface representing a symbol instance on the game board
+ * Interface representing a glyph instance on the game board
  */
-export interface SymbolInstance {
-  /** The symbol type */
-  symbol: Symbol;
+export interface GlyphInstance {
+  /** The glyph type */
+  glyph: Glyph;
   
   /** Position on the board (column) */
   column: number;
@@ -45,7 +45,7 @@ export interface SymbolInstance {
   /** Position on the board (row) */
   row: number;
   
-  /** Whether this symbol is part of a winning combination */
+  /** Whether this glyph is part of a winning combination */
   isWinning: boolean;
   winningMultiplier: number;
 }
@@ -54,7 +54,7 @@ export interface SymbolInstance {
  * Interface representing a reel in the slot machine
  */
 // export interface Reel {
-//   /** The symbols currently visible on this reel */
+//   /** The glyphs currently visible on this reel */
 //   visibleSymbols: SymbolInstance[];
   
 //   /** Whether the reel is currently spinning */

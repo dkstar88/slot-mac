@@ -1,14 +1,14 @@
-import { createSymbolInstance, getRandomSymbol } from './symbols';
-import { SymbolInstance } from '../types/symbols';
+import { createGlyphInstance, getRandomGlyph } from './glyphs';
+import { GlyphInstance } from '../types/glyphs';
 import { detectWins } from './winning-patterns';
 
 
-function genBoard(rows: number, cols: number): SymbolInstance[][] {
-    const board: SymbolInstance[][] = [];
+function genBoard(rows: number, cols: number): GlyphInstance[][] {
+    const board: GlyphInstance[][] = [];
     for (let row = 0; row < rows; row++) {
-        const rowSymbols: SymbolInstance[] = [];
+        const rowSymbols: GlyphInstance[] = [];
         for (let col = 0; col < cols; col++) {
-            rowSymbols.push(createSymbolInstance(getRandomSymbol(), row, col));
+            rowSymbols.push(createGlyphInstance(getRandomGlyph(), row, col));
         }
         board.push(rowSymbols);
     }    
@@ -22,7 +22,7 @@ export function generateRandomBoard(
     cols: number = 5, 
     minMultiplier: number = 1,
     minWinCount: number = 1    
-): SymbolInstance[][]
+): GlyphInstance[][]
 {
     
     for (let i = 0; i < MAX_RETRIES; i++) {
@@ -42,6 +42,6 @@ export function generateRandomBoard(
     
 }
 
-export function getBoardColumn(board: SymbolInstance[][], col: number): SymbolInstance[] {
+export function getBoardColumn(board: GlyphInstance[][], col: number): GlyphInstance[] {
     return board.map(row => row[col]);
 }

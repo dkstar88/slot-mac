@@ -17,7 +17,7 @@ const CONFIG = {
   backgroundColor: 0x1099bb,
   rows: 3,
   columns: 5,
-  symbolSize: 100,
+  glyphSize: 100,
   reelSpacing: 10
 };
 
@@ -130,7 +130,7 @@ class FruitfulFortune {
       height: CONFIG.height, // Leave space for UI
       rows: CONFIG.rows,
       columns: CONFIG.columns,
-      symbolSize: CONFIG.symbolSize,
+      glyphSize: CONFIG.glyphSize,
       reelSpacing: CONFIG.reelSpacing
     });
     this.gameBoard.position.set(0, 0);

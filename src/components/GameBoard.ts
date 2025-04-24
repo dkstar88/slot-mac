@@ -1,12 +1,12 @@
 import * as PIXI from 'pixi.js';
 import { Reel, ReelConfig } from './Reel';
-import { SymbolInstance } from '../types/symbols';
+import { GlyphInstance } from '../types/glyphs';
 import { GameEventType, WinDetectedEvent } from '../types/events';
 import { eventManager, publishEvent } from '../utils/event-system';
 import { detectWinningCombinations, transformBoardSymbolsToMatrix } from '../core/winning-patterns';
 import { sound } from '@pixi/sound';
 import { generateRandomBoard, getBoardColumn } from '../core/board';
-import { printBoardToConsole } from '../core/symbols';
+import { printBoardToConsole } from '../core/glyphs';
 
 /**
  * Configuration for the game board
@@ -25,7 +25,7 @@ export interface GameBoardConfig {
   columns: number;
   
   /** Size of each symbol */
-  symbolSize: number;
+  glyphSize: number;
   
   /** Spacing between symbols */
   symbolSpacing: number;
@@ -45,7 +45,7 @@ const DEFAULT_CONFIG: GameBoardConfig = {
   height: 350,
   rows: 3,
   columns: 5,
-  symbolSize: 100,
+  glyphSize: 100,
   symbolSpacing: 0,
   reelSpacing: 10,
   reelConfig: {
@@ -75,7 +75,7 @@ export class GameBoard extends PIXI.Container {
   private reelsStoppedCount: number = 0;
   
   /** Current board symbols */
-  private boardSymbols: SymbolInstance[][] = [];
+  private board: GlyphInstance[][] = [];
   
   /**
    * Constructor
@@ -92,8 +92,8 @@ export class GameBoard extends PIXI.Container {
     
     // Center the reels container
     this.reelsContainer.position.set(
-      this.config.width / 2 - (this.config.columns * (this.config.symbolSize + this.config.reelSpacing)) / 2,
-      this.config.height / 2 - (this.config.rows * this.config.symbolSize) / 2
+      this.config.width / 2 - (this.config.columns * (this.config.glyphSize + this.config.reelSpacing)) / 2,
+      this.config.height / 2 - (this.config.rows * this.config.glyphSize) / 2
     );
     
     // Initialize reels
@@ -116,11 +116,11 @@ export class GameBoard extends PIXI.Container {
       // Create reel configuration
       const reelConfig: Partial<ReelConfig> = {
         ...this.config.reelConfig,
-        width: this.config.symbolSize,
-        height: this.config.rows * this.config.symbolSize,
+        width: this.config.glyphSize,
+        height: this.config.rows * this.config.glyphSize,
         visibleSymbols: this.config.rows,
-        symbolSize: this.config.symbolSize,
-        symbolSpacing: this.config.symbolSpacing,
+        glyphSize: this.config.glyphSize,
+        glyphSpacing: this.config.symbolSpacing,
         spinStartDelay: (this.config.reelConfig?.spinStartDelay || 0) + col * 100, // Stagger start
         spinStopDelay: (this.config.reelConfig?.spinStopDelay || 0) + col * 100 // Stagger stop
       };
@@ -129,7 +129,7 @@ export class GameBoard extends PIXI.Container {
       const reel = new Reel(col, reelConfig);
       
       // Position reel
-      reel.position.x = col * (this.config.symbolSize + this.config.reelSpacing);
+      reel.position.x = col * (this.config.glyphSize + this.config.reelSpacing);
       
       // Add to container
       this.reelsContainer.addChild(reel);
@@ -155,7 +155,7 @@ export class GameBoard extends PIXI.Container {
     eventManager.subscribe(GameEventType.REEL_STOPPED, (event: any) => {
       this.onReelStopped(event.reelIndex, event.symbols);
     });
-    eventManager.subscribe(GameEventType.SPIN_BUTTON_CLICKED, (event: any) => {
+    eventManager.subscribe(GameEventType.SPIN_BUTTON_CLICKED, (_: any) => {
       this.initSymbols();
     })
     eventManager.subscribe(GameEventType.WIN_DETECTED, (event: WinDetectedEvent) => {
@@ -167,15 +167,21 @@ export class GameBoard extends PIXI.Container {
 
   }
   
-  private onWinDetected(pattern: any, symbols: SymbolInstance[]): void {
+  private onWinDetected(pattern: any, symbols: GlyphInstance[]): void {
     console.log("GameBoard: Win detected", pattern, symbols);
     // Highlight winning symbols 
-    this.clearWinningHighlights();
-
-    // Play win sound
-    sound.play("win");
-
+    
     this.highlightWinningSymbols(symbols);
+    // Play win sound
+    sound.play("win", {
+      volume: 0.5,
+
+      complete: () => {
+        this.clearWinningHighlights();
+      }
+    });
+
+    
 
   }
   /**
@@ -183,9 +189,9 @@ export class GameBoard extends PIXI.Container {
    * @param reelIndex Index of the reel that stopped
    * @param symbols Symbols on the stopped reel
    */
-  private onReelStopped(reelIndex: number, symbols: SymbolInstance[]): void {
+  private onReelStopped(reelIndex: number, symbols: GlyphInstance[]): void {
     // Update board symbols for this reel
-    this.boardSymbols[reelIndex] = symbols;
+    this.board[reelIndex] = symbols;
     
     // Increment reels stopped count
     this.reelsStoppedCount++;
@@ -197,7 +203,7 @@ export class GameBoard extends PIXI.Container {
       
       // Publish all reels stopped event
       publishEvent(GameEventType.ALL_REELS_STOPPED, {
-        boardSymbols: this.boardSymbols
+        boardSymbols: this.board
       });
       
       // Detect winning combinations
@@ -241,12 +247,12 @@ export class GameBoard extends PIXI.Container {
    */
   private detectWins(): void {
     
-    console.log("GameBoard: Detecting wins", this.boardSymbols);
+    console.log("GameBoard: Detecting wins", this.board);
     // // Detect winning combinations
     // const allSymbols = this.reels.map((reel) => reel.getSymbols());
     // printBoardToConsole(transformBoardSymbolsToMatrix(allSymbols));
     // console.log("GameBoard: Detecting wins", this.boardSymbols);
-    const board = transformBoardSymbolsToMatrix(this.boardSymbols);
+    const board = transformBoardSymbolsToMatrix(this.board);
     printBoardToConsole(board);    
     // console.log("GameBoard: ", board);    
     const winningCombinations = detectWinningCombinations(board);
@@ -254,17 +260,21 @@ export class GameBoard extends PIXI.Container {
     // If there are winning combinations, highlight them
     if (winningCombinations.length > 0) {
       // Collect all winning symbols
-      const winningSymbols: SymbolInstance[] = [];
+      const winningSymbols: GlyphInstance[] = [];
 
+      var i = 0;
       for (const { pattern, symbols } of winningCombinations) {
    
         winningSymbols.push(...symbols);
         // console.log("GameBoard: Winning symbols detected", symbols);
         // Publish win detected event
-        publishEvent(GameEventType.WIN_DETECTED, {
-          pattern: pattern, // This would be the actual pattern type
-          symbols
-        });
+        setTimeout(function() {
+          publishEvent(GameEventType.WIN_DETECTED, {
+            pattern: pattern, // This would be the actual pattern type
+            symbols
+          });
+        }, i*500);
+        i++;
       }
       
       // Highlight winning symbols
@@ -277,7 +287,7 @@ export class GameBoard extends PIXI.Container {
    * Highlight winning symbols
    * @param winningSymbols Array of winning symbols
    */
-  private highlightWinningSymbols(winningSymbols: SymbolInstance[]): void {
+  private highlightWinningSymbols(winningSymbols: GlyphInstance[]): void {
     // Highlight winning symbols on each reel
     for (const reel of this.reels) {
       reel.highlightWinningSymbols(winningSymbols);
@@ -301,14 +311,14 @@ export class GameBoard extends PIXI.Container {
    */
   public initSymbols(): void {
 
-    this.boardSymbols = generateRandomBoard(this.config.rows, this.config.columns);
-    console.log("GameBoard: Initializing symbols", this.boardSymbols);
-    printBoardToConsole(this.boardSymbols);
+    this.board = generateRandomBoard(this.config.rows, this.config.columns);
+    console.log("GameBoard: Initializing symbols", this.board);
+    printBoardToConsole(this.board);
     
     // Set symbols on each reel
     for (let i = 0; i < this.reels.length; i++) {
       const reel = this.reels[i];
-      const reelSymbols = getBoardColumn(this.boardSymbols, i);
+      const reelSymbols = getBoardColumn(this.board, i);
       
       // Set symbols on the reel
       reel.setVisibleSymbols(reelSymbols);
@@ -320,8 +330,8 @@ export class GameBoard extends PIXI.Container {
    * Get the current board symbols
    * @returns 2D array of symbol instances
    */
-  public getSymbols(): SymbolInstance[][] {
-    return this.boardSymbols;
+  public getSymbols(): GlyphInstance[][] {
+    return this.board;
   }
   
   /**

@@ -1,4 +1,4 @@
-import { SymbolInstance, SymbolType } from '../types/symbols';
+import { GlyphInstance, GlyphType } from '../types/glyphs';
 import { WinCombinationType, WinningPattern } from '../types/winning-combinations';
 import { Win } from '../types/game-state';
 /**
@@ -28,7 +28,7 @@ export function* sliceArray<T>(array: T[][], x: number, y: number): IterableIter
   }
 }
 
-export function* checkSymbolsMatch(board: SymbolInstance[][], patternMatrix: number[][]): IterableIterator<SymbolInstance[]>
+export function* checkSymbolsMatch(board: GlyphInstance[][], patternMatrix: number[][]): IterableIterator<GlyphInstance[]>
 {
 
   // // Convert board to 2d matrix of symbols
@@ -36,15 +36,15 @@ export function* checkSymbolsMatch(board: SymbolInstance[][], patternMatrix: num
 
   // Slice board2d to all possible that can match the patternMatrix
   for (const sliced of sliceArray(board, patternMatrix.length, patternMatrix[0].length)) {
-    let firstSymbol: SymbolType | null = null;
-    const matchingSymbols: SymbolInstance[] = [];
+    let firstSymbol: GlyphType | null = null;
+    const matchingSymbols: GlyphInstance[] = [];
     var isMatch = true;
     sliced.forEach((row, rowIndex) => {
       row.forEach((symbol, colIndex) => {
         if (patternMatrix[rowIndex][colIndex] === 1) {
           if (firstSymbol === null) {
-            firstSymbol = symbol.symbol.type;
-          } else if (symbol.symbol.type !== firstSymbol) {
+            firstSymbol = symbol.glyph.type;
+          } else if (symbol.glyph.type !== firstSymbol) {
             isMatch = false;
           }
           matchingSymbols.push(symbol);
@@ -157,11 +157,11 @@ export const WINNING_PATTERNS: WinningPattern[] = [
  * Transform board symbols to proper 2d matrix based on row, column of symbol
  *
  */
-export function transformBoardSymbolsToMatrix(board: SymbolInstance[][]): SymbolInstance[][] {
-  const matrix: SymbolInstance[][] = [];
+export function transformBoardSymbolsToMatrix(board: GlyphInstance[][]): GlyphInstance[][] {
+  const matrix: GlyphInstance[][] = [];
   
   for (let i = 0; i < board[0].length; i++) {
-    const row: SymbolInstance[] = new Array<SymbolInstance>(board.length);
+    const row: GlyphInstance[] = new Array<GlyphInstance>(board.length);
     for (let j = 0; j < board.length; j++) {
       const symbol = board[j][i];
       row[j] = symbol;
@@ -177,8 +177,8 @@ export function transformBoardSymbolsToMatrix(board: SymbolInstance[][]): Symbol
  * @param board The current state of the game board
  * @returns Array of winning combinations
  */
-export function detectWinningCombinations(board: SymbolInstance[][]) {
-  const winningCombinations: { pattern: WinningPattern; symbols: SymbolInstance[] }[] = [];
+export function detectWinningCombinations(board: GlyphInstance[][]) {
+  const winningCombinations: { pattern: WinningPattern; symbols: GlyphInstance[] }[] = [];
   
   for (const pattern of WINNING_PATTERNS) {
     for (const matchingSymbols of pattern.checkMatch(board)) {
@@ -198,13 +198,13 @@ export function detectWinningCombinations(board: SymbolInstance[][]) {
   return winningCombinations;
 }
 
-export function detectWins(board: SymbolInstance[][]): Win[] {
+export function detectWins(board: GlyphInstance[][]): Win[] {
   const winningCombinations = detectWinningCombinations(board);
   const wins: Win[] = winningCombinations.map(({ pattern, symbols }) => {
 
-    const symbolValue = Math.floor(symbols.reduce((acc, symbol) => acc + symbol.symbol.payoutValue, 0) / symbols.length);
+    const symbolValue = Math.floor(symbols.reduce((acc, symbol) => acc + symbol.glyph.payoutValue, 0) / symbols.length);
     const baseValue = symbolValue;
-    const totalValue = Math.floor(symbols.reduce((acc, symbol) => acc + (symbol.symbol.payoutValue * pattern.multiplier), 0));
+    const totalValue = Math.floor(symbols.reduce((acc, symbol) => acc + (symbol.glyph.payoutValue * pattern.multiplier), 0));
     return {
       symbols,
       combinationType: pattern.type,
@@ -239,7 +239,7 @@ export function calculatePayout(
  * @returns New multiplier value or null if no change
  */
 export function determineMultiplierIncrease(
-  winningCombinations: { pattern: WinningPattern; symbols: SymbolInstance[] }[]
+  winningCombinations: { pattern: WinningPattern; symbols: GlyphInstance[] }[]
 ): number | null {
   // Check for jackpot (highest priority)
   const jackpot = winningCombinations.find(
