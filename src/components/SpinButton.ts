@@ -141,9 +141,7 @@ export class SpinButton extends PIXI.Container {
    * Handle pointer down event
    */
   private onPointerDown(): void {
-    console.log("SpinButton: onPointerDown");
     if (this.state === 'disabled' || this.state === 'spinning') {
-      console.log("SpinButton: onPointerDown - button is disabled or spinning");
       return;
     }
     
@@ -155,15 +153,12 @@ export class SpinButton extends PIXI.Container {
    * Handle pointer up event
    */
   private onPointerUp(): void {
-    console.log("SpinButton: onPointerUp");
     if (this.state === 'disabled' || this.state === 'spinning') {
-      console.log("SpinButton: onPointerUp - button is disabled or spinning");
       return;
     }
     
     // If the button was pressed, trigger a click
     if (this.state === 'pressed') {
-      console.log("SpinButton: onPointerUp - triggering click");
       this.onClick();
     }
     

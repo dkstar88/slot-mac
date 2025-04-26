@@ -20,8 +20,8 @@ const MAX_RETRIES = 1000;
 export function generateRandomBoard(
     rows: number = 3, 
     cols: number = 5, 
-    minMultiplier: number = 1,
-    minWinCount: number = 1    
+    minMultiplier: number = 0,
+    minWinCount: number = 0    
 ): GlyphInstance[][]
 {
     

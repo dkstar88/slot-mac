@@ -7,7 +7,7 @@ import { detectWinningCombinations, transformBoardSymbolsToMatrix } from '../cor
 import { sound } from '@pixi/sound';
 import { generateRandomBoard, getBoardColumn } from '../core/board';
 import { printBoardToConsole } from '../core/glyphs';
-
+import { MAIN_CONFIG } from '../config';
 /**
  * Configuration for the game board
  */
@@ -41,18 +41,14 @@ export interface GameBoardConfig {
  * Default configuration for the game board
  */
 const DEFAULT_CONFIG: GameBoardConfig = {
-  width: 550,
-  height: 350,
-  rows: 3,
-  columns: 5,
-  glyphSize: 100,
-  symbolSpacing: 0,
-  reelSpacing: 10,
-  reelConfig: {
-    spinDuration: 2000,
-    spinStartDelay: 0,
-    spinStopDelay: 0
-  }
+  width: MAIN_CONFIG.board.width,
+  height: MAIN_CONFIG.board.height,
+  rows: MAIN_CONFIG.rows,
+  columns: MAIN_CONFIG.columns,
+  glyphSize: MAIN_CONFIG.glyphSize,
+  symbolSpacing: MAIN_CONFIG.symbolSpacing,
+  reelSpacing: MAIN_CONFIG.reelSpacing,
+  reelConfig: MAIN_CONFIG.reelConfig
 };
 
 /**

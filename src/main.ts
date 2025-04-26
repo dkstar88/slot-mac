@@ -8,18 +8,18 @@ import { GameStateType } from './types/game-state';
 import { detectWins, calculatePayout } from './core/winning-patterns';
 import { loadAllAssets } from './assets';
 import { GameBackground } from './components/GameBackground';
+import { MAIN_CONFIG } from './config';
 /**
  * Game configuration
  */
 const CONFIG = {
-  width: 800,
-  height: 600,
-  backgroundColor: 0x1099bb,
-  rows: 3,
-  columns: 5,
-  glyphSize: 100,
-  reelSpacing: 10
-};
+  width: MAIN_CONFIG.width,
+  height: MAIN_CONFIG.height,
+  backgroundColor: MAIN_CONFIG.backgroundColor,
+  rows: MAIN_CONFIG.rows,
+  columns: MAIN_CONFIG.columns,
+  glyphSize: MAIN_CONFIG.glyphSize,
+  reelSpacing: MAIN_CONFIG.reelSpacing,};
 
 /**
  * Main game class
@@ -133,11 +133,12 @@ class FruitfulFortune {
       glyphSize: CONFIG.glyphSize,
       reelSpacing: CONFIG.reelSpacing
     });
-    this.gameBoard.position.set(0, 0);
+    this.gameBoard.position.set(MAIN_CONFIG.board.x, MAIN_CONFIG.board.y);
+    
     this.app.stage.addChild(this.gameBoard);
     
     // Create game UI
-    this.gameUI = new GameUI({
+    this.gameUI = new GameUI(this.app, {
       width: CONFIG.width,
       height: CONFIG.height
     });

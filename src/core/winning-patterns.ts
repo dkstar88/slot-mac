@@ -67,7 +67,7 @@ export const WINNING_PATTERNS: WinningPattern[] = [
     type: WinCombinationType.THREE_ACROSS,
     group: 'across',
     name: '3 Across',
-    description: 'Three Across in rows',
+    description: 'Three Across in one row',
     multiplier: 1,
     checkMatch: (board) => checkSymbolsMatch(board, [[1, 1, 1]])
   }, 
@@ -75,18 +75,18 @@ export const WINNING_PATTERNS: WinningPattern[] = [
   {
     type: WinCombinationType.FOUR_ACROSS,
     group: 'across',
-    name: '4 Across (Top)',
-    description: 'Four matching symbols in the top row',
-    multiplier: 1.5,
+    name: '4 Across',
+    description: 'Four matching symbols in one row',
+    multiplier: 2,
     checkMatch: (board) => checkSymbolsMatch(board, [[1, 1, 1, 1]])
   },
   // 5 Across (for each row)
   {
     type: WinCombinationType.FIVE_ACROSS,
     group: 'across',
-    name: '5 Across (Top)',
-    description: 'Five matching symbols in the top row',
-    multiplier: 2,    
+    name: '5 Across',
+    description: 'Five matching symbols in one row',
+    multiplier: 3,    
     checkMatch: (board) => checkSymbolsMatch(board, [[1, 1, 1, 1, 1]])
   },
   // 3 Down (for each column)
@@ -104,7 +104,7 @@ export const WINNING_PATTERNS: WinningPattern[] = [
     group: 'diagonal',
     name: '3 Forward Diagonal',
     description: 'Three matching symbols in a forward diagonal',
-    multiplier: 1.5,
+    multiplier: 1,
     checkMatch: (board) => checkSymbolsMatch(board, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
   },
   {
@@ -112,25 +112,25 @@ export const WINNING_PATTERNS: WinningPattern[] = [
     group: 'diagonal',
     name: '3 Backward Diagonal',
     description: 'Three matching symbols in a backward diagonal',
-    multiplier: 1.5,
+    multiplier: 1,
     checkMatch: (board) => checkSymbolsMatch(board, [[0, 0, 1], [0, 1, 0], [1, 0, 0]])
   },  
 
   {
     type: WinCombinationType.FIVE_MIRRORED_DIAGONAL,
     group: 'diagonal',
-    name: '5 Star Diagonal',
+    name: 'Star Diagonal',
     description: 'Star Diagonal',
-    multiplier: 1.5,
+    multiplier: 3,
     checkMatch: (board) => checkSymbolsMatch(board, [[1, 0, 1], [0, 1, 0], [1, 0, 1]])
   },  
   // 9 Square (3x3 square)
   {
     type: WinCombinationType.NINE_SQUARE,
     group: 'square',
-    name: '9 Square',
+    name: 'Square',
     description: 'Nine matching symbols forming a 3x3 square',
-    multiplier: 4,
+    multiplier: 5,
     checkMatch: (board) => checkSymbolsMatch(board, [
       [1, 1, 1],
       [1, 1, 1],
@@ -142,9 +142,9 @@ export const WINNING_PATTERNS: WinningPattern[] = [
   {
     type: WinCombinationType.FIFTEEN_ALL_MATCH,
     group: 'jackpot',
-    name: '15 All Match Jackpot',
+    name: 'Jackpot',
     description: 'All 15 symbols on the board match',
-    multiplier: 5,
+    multiplier: 10,
     checkMatch: (board) => checkSymbolsMatch(board, [
       [1, 1, 1, 1, 1],
       [1, 1, 1, 1, 1],
@@ -178,24 +178,8 @@ export function transformBoardSymbolsToMatrix(board: GlyphInstance[][]): GlyphIn
  * @returns Array of winning combinations
  */
 export function detectWinningCombinations(board: GlyphInstance[][]) {
-  const winningCombinations: { pattern: WinningPattern; symbols: GlyphInstance[] }[] = [];
-  
-  for (const pattern of WINNING_PATTERNS) {
-    for (const matchingSymbols of pattern.checkMatch(board)) {
-      matchingSymbols.forEach(symbol => {      
-        symbol.isWinning = true;
-        if (pattern.multiplier > symbol.winningMultiplier) {
-          symbol.winningMultiplier = pattern.multiplier;
-        }                  
-      });
-      winningCombinations.push({
-        pattern,
-        symbols: matchingSymbols
-      });      
-    }
-  }
-  
-  return winningCombinations;
+
+  return WinningPatternsManager.detectWinningCombinations(board);
 }
 
 export function detectWins(board: GlyphInstance[][]): Win[] {
@@ -233,38 +217,52 @@ export function calculatePayout(
   return totalPayout;
 }
 
-/**
- * Determine if the winning combinations should increase the multiplier
- * @param winningCombinations Array of winning combinations
- * @returns New multiplier value or null if no change
- */
-export function determineMultiplierIncrease(
-  winningCombinations: { pattern: WinningPattern; symbols: GlyphInstance[] }[]
-): number | null {
-  // Check for jackpot (highest priority)
-  const jackpot = winningCombinations.find(
-    ({ pattern }) => pattern.type === WinCombinationType.FIFTEEN_ALL_MATCH
-  );
-  if (jackpot) return 5;
-  
-  // Check for 9 square
-  const nineSquare = winningCombinations.find(
-    ({ pattern }) => pattern.type === WinCombinationType.NINE_SQUARE
-  );
-  if (nineSquare) return 4;
-  
-  // Check for 5 mirrored diagonal
-  const mirroredDiagonal = winningCombinations.find(
-    ({ pattern }) => pattern.type === WinCombinationType.FIVE_MIRRORED_DIAGONAL
-  );
-  if (mirroredDiagonal) return 3;
-  
-  // Check for 5 across
-  const fiveAcross = winningCombinations.find(
-    ({ pattern }) => pattern.type === WinCombinationType.FIVE_ACROSS
-  );
-  if (fiveAcross) return 2;
-  
-  // No multiplier increase
-  return null;
+
+class _WinningPatternsManager {
+  private winningPatterns: WinningPattern[] = [];
+
+  constructor() {
+    Object.assign(this.winningPatterns, WINNING_PATTERNS);
+  }
+
+  public getWinningPatterns(): WinningPattern[] {
+    return this.winningPatterns;
+  }
+
+  public incGroupMultiplier(group: string, value: number): void {
+    for (const pattern of this.winningPatterns.filter(p => p.group === group)) {
+      pattern.multiplier += value;
+    }
+  }
+
+  public incTypeMultiplier(patternType: WinCombinationType, value: number): void {
+    for (const pattern of this.winningPatterns.filter(p => p.type === patternType))
+    {
+      pattern.multiplier += value;
+    }
+  }
+
+  detectWinningCombinations(board: GlyphInstance[][]) {
+    const winningCombinations: { pattern: WinningPattern; symbols: GlyphInstance[] }[] = [];
+    
+    for (const pattern of this.winningPatterns) {
+      for (const matchingSymbols of pattern.checkMatch(board)) {
+        matchingSymbols.forEach(symbol => {      
+          symbol.isWinning = true;
+          if (pattern.multiplier > symbol.winningMultiplier) {
+            symbol.winningMultiplier = pattern.multiplier;
+          }                  
+        });
+        winningCombinations.push({
+          pattern,
+          symbols: matchingSymbols
+        });      
+      }
+    }
+    
+    return winningCombinations;
+  }  
+
 }
+
+export const WinningPatternsManager = new _WinningPatternsManager();

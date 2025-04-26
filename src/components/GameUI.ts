@@ -1,12 +1,17 @@
 import * as PIXI from 'pixi.js';
 import { AnimatedSprite } from 'pixi.js';
 import { SpinButton } from './SpinButton';
-import { GLYPHS_ARRAY } from '../core/glyphs';
 import { sound } from '@pixi/sound';
 import { GameEventType } from '../types/events';
 import { eventManager, publishEvent } from '../utils/event-system';
 import { IGameState } from '../types/game-state';
 import { GameStateManager } from '../state/game-state-manager';
+import { MAIN_CONFIG } from '../config';
+import { MessagePopup } from './MessagePopup';
+import { Coins } from './Coins'
+import { GlyphValuesBoard } from './GlyphValuesBoard'
+import { CombinationBoard } from './CombinationBoard';
+import { Button } from './Button';
 
 /**
  * Configuration for the game UI
@@ -41,14 +46,14 @@ export interface GameUIConfig {
  * Default configuration for the game UI
  */
 const DEFAULT_CONFIG: GameUIConfig = {
-  width: 800,
-  height: 600,
-  backgroundColor: 0x1099bb,
-  textColor: 0xffffff,
-  fontFamily: 'Arial',
-  labelFontSize: 16,
-  valueFontSize: 24,
-  messageFontSize: 32
+  width: MAIN_CONFIG.width,
+  height: MAIN_CONFIG.height,
+  backgroundColor: MAIN_CONFIG.backgroundColor,
+  textColor: MAIN_CONFIG.textColor,
+  fontFamily: '"Gill Sans", sans-serif',
+  labelFontSize: MAIN_CONFIG.labelFontSize,
+  valueFontSize: MAIN_CONFIG.valueFontSize,
+  messageFontSize: MAIN_CONFIG.messageFontSize,
 };
 
 /**
@@ -65,14 +70,17 @@ export class GameUI extends PIXI.Container {
   /** Reset button */
   private resetButton!: PIXI.Container;
   
+  /** Show popup button */
+  private showPopupButton!: PIXI.Container;
+  
   /** Coin display */
-  private coinDisplay!: PIXI.Text;
-  
-  /** Multiplier display */
-  private multiplierDisplay!: PIXI.Text;
-  
+  private coinDisplay!: Coins;
+   
   /** Message display */
   private messageDisplay!: PIXI.Text;
+  
+  /** Message popup */
+  private messagePopup!: MessagePopup;
   
   /** Win amount display */
   private winAmountDisplay!: PIXI.Text;
@@ -86,15 +94,23 @@ export class GameUI extends PIXI.Container {
   /** Container for coin particles */
   private particleContainer!: PIXI.Container;
   
+  /** Container for combinations display */
+  private combinationsContainer!: PIXI.Container;
+  
   /** Gold coin spritesheet */
   private goldCoinSpritesheet: PIXI.Spritesheet | null = null;
   
+  /** PIXI application instance */
+  private app: PIXI.Application;
+  
   /**
    * Constructor
+   * @param app PIXI application instance
    * @param config Configuration for the UI
    */
-  constructor(config: Partial<GameUIConfig> = {}) {
+  constructor(app: PIXI.Application, config: Partial<GameUIConfig> = {}) {
     super();
+    this.app = app;
     
     this.config = { ...DEFAULT_CONFIG, ...config };
     
@@ -103,6 +119,12 @@ export class GameUI extends PIXI.Container {
     
     // Initialize particle system
     this.initParticleSystem();
+    
+    // Initialize combinations display
+    this.initCombinationsDisplay();
+    
+    // Initialize message popup
+    this.initMessagePopup();
     
     // Subscribe to events
     this.subscribeToEvents();
@@ -113,31 +135,14 @@ export class GameUI extends PIXI.Container {
    */
   private initUI(): void {
 
-
-    // Create coin display
-    this.coinDisplay = new PIXI.Text({
-      text: 'Coins: 0',
-      style: {
-        fontFamily: this.config.fontFamily,
-        fontSize: this.config.valueFontSize,
-        fill: this.config.textColor
-      }
+    this.coinDisplay = new Coins({
+      fontFamily: this.config.fontFamily,
+      fontSize: this.config.valueFontSize,
+      textColor: this.config.textColor,
     });
     this.coinDisplay.position.set(20, 20);
     this.addChild(this.coinDisplay);
-    
-    // Create multiplier display
-    this.multiplierDisplay = new PIXI.Text({
-      text: 'Multiplier: 1x',
-      style: {
-        fontFamily: this.config.fontFamily,
-        fontSize: this.config.valueFontSize,
-        fill: this.config.textColor
-      }
-    });    
-    this.multiplierDisplay.position.set(20, 60);
-    this.addChild(this.multiplierDisplay);
-    
+       
     // Create message display
     this.messageDisplay = new PIXI.Text({
       style: {
@@ -189,42 +194,28 @@ export class GameUI extends PIXI.Container {
       20
     );
     this.addChild(this.resetButton);
-
-
-
-    // Create symbols payout display
-    const symbolsContainer = new PIXI.Container();
-    symbolsContainer.position.set(10, 180);
     
-    // Add title
-    const title = new PIXI.Text({
-      text: 'Values',
-      style: {
-        fontFamily: this.config.fontFamily,
-        fontSize: this.config.labelFontSize,
-        fill: this.config.textColor
-      }
-    } as PIXI.TextOptions);
-    symbolsContainer.addChild(title);
-    
-    // Create grid of symbols
-    GLYPHS_ARRAY.forEach((symbol, index) => {
-      const yPos = 30 + (index * 20);
-            
-      // Create value text
-      const valueText = new PIXI.Text({
-        text: `${symbol.emoji}  ${symbol.payoutValue}`,
-        style: {
-          fontFamily: this.config.fontFamily,
-          fontSize: this.config.valueFontSize/2,
-          fill: this.config.textColor
-        }
-      } as PIXI.TextOptions);
-      valueText.position.set(1, yPos);
-      symbolsContainer.addChild(valueText);
+    // Create show popup button
+    this.showPopupButton = this.createShowPopupButton();
+    this.showPopupButton.position.set(
+      this.config.width - 200, 
+      20
+    );
+    this.addChild(this.showPopupButton);
+
+
+    const glyphListContainer = new GlyphValuesBoard({
+      width: 180,
+      height: 300,
+      color: 0x333333,
+      fontFamily: this.config.fontFamily,
+      fontSize: this.config.valueFontSize,
+      textColor: this.config.textColor,
     });
+    glyphListContainer.position.set(30, 180);
+    this.addChild(glyphListContainer);
+    
 
-    this.addChild(symbolsContainer);
   }
   
   /**
@@ -331,35 +322,72 @@ export class GameUI extends PIXI.Container {
     if (!this.gameState) return;
     
     // Update coin display
-    this.coinDisplay.text = `Coins: ${this.gameState.playerStats.coins}`;
+    this.coinDisplay.setCoins(this.gameState.playerStats.coins);
+    this.coinDisplay.setMultiplier(this.gameState.currentMultiplier);
     
-    // Update multiplier display
-    this.multiplierDisplay.text = `Bet: ${this.gameState.currentMultiplier} coins`;
+  }
+  
+  /**
+   * Initialize message popup
+   */
+  private initMessagePopup(): void {
+    // Create message popup
+    this.messagePopup = new MessagePopup(this.app);
   }
   
   /**
    * Show a message
    * @param message Message to show
    * @param duration Duration to show the message (ms), 0 for indefinite
+   * @param usePopup Whether to use the popup dialog (true) or simple text display (false)
    */
-  public showMessage(message: string, duration: number = 0): void {
-    // Clear any existing timeout
-    if (this.messageTimeoutId !== null) {
-      clearTimeout(this.messageTimeoutId);
-      this.messageTimeoutId = null;
-    }
-    
-    // Set message text
-    this.messageDisplay.text = message;
-    this.messageDisplay.visible = true;
-    
-    // If duration is specified, clear the message after the duration
-    if (duration > 0) {
-      this.messageTimeoutId = window.setTimeout(() => {
-        this.clearMessage();
+  public showMessage(message: string, duration: number = 0, usePopup: boolean = false): void {
+    if (usePopup) {
+      // Show message in popup
+      this.messagePopup.show(message, () => {
+        // This callback is called when the popup is closed
+        if (this.messageTimeoutId !== null) {
+          clearTimeout(this.messageTimeoutId);
+          this.messageTimeoutId = null;
+        }
+      });
+      
+      // If duration is specified, close the popup after the duration
+      if (duration > 0) {
+        this.messageTimeoutId = window.setTimeout(() => {
+          this.messagePopup.close();
+          this.messageTimeoutId = null;
+        }, duration);
+      }
+    } else {
+      // Show message in simple text display (original behavior)
+      // Clear any existing timeout
+      if (this.messageTimeoutId !== null) {
+        clearTimeout(this.messageTimeoutId);
         this.messageTimeoutId = null;
-      }, duration);
+      }
+      
+      // Set message text
+      this.messageDisplay.text = message;
+      this.messageDisplay.visible = true;
+      
+      // If duration is specified, clear the message after the duration
+      if (duration > 0) {
+        this.messageTimeoutId = window.setTimeout(() => {
+          this.clearMessage();
+          this.messageTimeoutId = null;
+        }, duration);
+      }
     }
+  }
+  
+  /**
+   * Show a message in a popup dialog
+   * @param message Message to show
+   * @param duration Duration to show the message (ms), 0 for indefinite
+   */
+  public showPopupMessage(message: string, duration: number = 0): void {
+    this.showMessage(message, duration, true);
   }
   
   /**
@@ -368,6 +396,7 @@ export class GameUI extends PIXI.Container {
   public clearMessage(): void {
     this.messageDisplay.text = '';
     this.messageDisplay.visible = false;
+    this.messagePopup.close();
   }
   
   /**
@@ -427,70 +456,81 @@ export class GameUI extends PIXI.Container {
   }
   
   /**
+   * Create a show popup button
+   * @returns Show popup button container
+   */
+  private createShowPopupButton(): PIXI.Container {
+
+    
+    const button = new Button( {
+      width: 80,
+      height: 30,
+      text: 'POPUP',
+      fontFamily: this.config.fontFamily,
+      fontSize: this.config.labelFontSize,
+      textColor: 0xffffff,
+      color: 0x00aa00,
+      hoverColor: 0x00cc00,
+      downColor: 0x008800,
+      onClicked: () => this.onShowPopupButtonClicked()
+    })
+    return button;
+
+  }
+  
+  /**
+   * Handle show popup button clicked event
+   */
+  private onShowPopupButtonClicked(): void {
+    console.log("Show popup button clicked");
+    this.showPopupMessage('This is a popup message with a close button!');
+  }
+  
+  /**
    * Create a reset button
    * @returns Reset button container
    */
   private createResetButton(): PIXI.Container {
-    const container = new PIXI.Container();
-    container.setSize(80, 30);
-    // Create background
-    const background = new PIXI.Graphics()
-      .roundRect(0, 0, 80, 30, 5)
-      .fill(0x0000ff);
-    container.addChild(background);
-    
-    // Create text
-    const text = new PIXI.Text({
+
+    const button = new Button( {
+      width: 80,
+      height: 30,
       text: 'RESET',
-      style: {
-        fontFamily: this.config.fontFamily,
-        fontSize: this.config.labelFontSize,
-        fill: 0xffffff,
-      },
-      align: 'center'
-    } as PIXI.TextOptions);
-    text.anchor.set(0.5);
-    text.position.set(40, 15);
-    container.addChild(text);
-    
-    // Set up interactivity
-    container.eventMode = 'static';
-    container.cursor = 'pointer';
-    
-    // Add event listeners
-    container.on('pointerdown', () => {
-      background.tint = 0x0000cc; // Darker blue when pressed
-    });
-    
-    container.on('pointerup', () => {
-      background.tint = 0x0000ff; // Back to normal blue
-      this.onResetButtonClicked();
-    });
-    
-    container.on('pointerupoutside', () => {
-      background.tint = 0x0000ff; // Back to normal blue
-    });
-    
-    container.on('pointerover', () => {
-      background.tint = 0x3333ff; // Lighter blue when hovered
-    });
-    
-    container.on('pointerout', () => {
-      background.tint = 0x0000ff; // Back to normal blue
-    });
-    
-    return container;
+      fontFamily: this.config.fontFamily,
+      fontSize: this.config.labelFontSize,
+      textColor: 0xffffff,
+      onClicked: () => this.onResetButtonClicked()
+    })
+    return button;
   }
   
   /**
    * Handle reset button clicked event
    */
   private onResetButtonClicked(): void {
-    console.log("Reset button clicked");
     GameStateManager.resetState();
     this.showMessage('Game Restart!');
   }
   
+  /**
+   * Initialize the combinations display on the right side of the screen
+   */
+  private initCombinationsDisplay(): void {
+    // Create container for combinations display
+    this.combinationsContainer = new CombinationBoard({
+      width: 200,
+      height: 400,
+      color: 0x333333,
+      fontFamily: this.config.fontFamily,
+      fontSize: this.config.valueFontSize*0.8,
+      textColor: this.config.textColor,
+    });
+    this.combinationsContainer.position.set(this.config.width - 220, 180);
+    
+    // Add combinations container to main UI
+    this.addChild(this.combinationsContainer);
+  }
+
   /**
    * Initialize the particle system
    */
@@ -620,6 +660,16 @@ export class GameUI extends PIXI.Container {
     // Destroy particle container
     if (this.particleContainer) {
       this.particleContainer.destroy({ children: true });
+    }
+    
+    // Destroy combinations container
+    if (this.combinationsContainer) {
+      this.combinationsContainer.destroy({ children: true });
+    }
+    
+    // Destroy message popup
+    if (this.messagePopup) {
+      this.messagePopup.destroy();
     }
     
     // Call parent destroy

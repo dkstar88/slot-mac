@@ -68,15 +68,5 @@ export interface WinningCombinationsDetector {
     currentMultiplier: number
   ): number;
   
-  /**
-   * Determine if the winning combinations should increase the multiplier
-   * @param winningCombinations Array of winning combinations
-   * @returns New multiplier value or null if no change
-   */
-  determineMultiplierIncrease(
-    winningCombinations: {
-      pattern: WinningPattern;
-      symbols: GlyphInstance[];
-    }[]
-  ): number | null;
+
 }
