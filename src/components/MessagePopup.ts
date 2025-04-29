@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import { Button } from '../components/Button';
+import { Button, ButtonConfig } from '../components/Button';
 import { MAIN_CONFIG } from '../config';
 
 /**
@@ -35,6 +35,8 @@ export interface MessagePopupConfig {
   
   /** Padding */
   padding: number;
+
+  buttons?: [Partial<ButtonConfig>]
 }
 
 /**
@@ -69,9 +71,6 @@ export class MessagePopup extends PIXI.Container {
   /** Message text */
   private messageText: PIXI.Text;
   
-  /** Close button */
-  private closeButton: PIXI.Container;
-  
   /** Callback for when the popup is closed */
   private onCloseCallback: (() => void) | null = null;
   
@@ -88,7 +87,14 @@ export class MessagePopup extends PIXI.Container {
     this.app = app;
     
     this.config = { ...DEFAULT_CONFIG, ...config };
-    
+    if (!this.config.buttons) {
+      this.config.buttons = [
+        {
+          text: 'Close',
+          onClicked: () => this.close(),
+        }
+      ]
+    }
 
 
     // Create overlay
@@ -123,13 +129,16 @@ export class MessagePopup extends PIXI.Container {
     this.popup.addChild(background);
     
     // Create message text
-    this.messageText = new PIXI.Text('', {
-      fontFamily: this.config.fontFamily,
-      fontSize: this.config.fontSize,
-      fill: this.config.textColor,
-      align: 'center',
-      wordWrap: true,
-      wordWrapWidth: this.config.width - (this.config.padding * 2)
+    this.messageText = new PIXI.Text({
+      text: '',
+      style: {
+        fontFamily: this.config.fontFamily,
+        fontSize: this.config.fontSize,
+        fill: this.config.textColor,
+        align: 'center',
+        wordWrap: true,
+        wordWrapWidth: this.config.width - (this.config.padding * 2)  
+      }
     });
     this.messageText.anchor.set(0.5, 0.5);
     this.messageText.position.set(
@@ -138,14 +147,17 @@ export class MessagePopup extends PIXI.Container {
     );
     this.popup.addChild(this.messageText);
     
-    // Create close button
-    this.closeButton = this.createCloseButton();
-    // Position the button below the text and centered
-    this.closeButton.position.set(
-      (this.config.width - this.closeButton.width)/2,
-      this.messageText.y + this.closeButton.height + 50 // Position below the text
-    );
-    this.popup.addChild(this.closeButton);
+    const button_container = new PIXI.Container();
+    var btnX = 0;
+    for (const btn of this.config.buttons) {
+        const button = new Button(btn);
+        button.position.set(btnX, 0);
+        button_container.addChild(button);
+        btnX += button.width + 10;
+    }
+    button_container.position.set((this.config.width - button_container.width) / 2, this.config.height-50);
+    this.popup.addChild(button_container);
+
     
     // Set up interactivity for the overlay
     this.overlay.eventMode = 'static';

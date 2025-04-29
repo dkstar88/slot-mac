@@ -57,6 +57,10 @@ export function loadAllAssets(): Promise<{ asset: { src: string; alias: string; 
             src: 'assets/ui/reel.png',
             alias: 'reel'
         },
+        {
+            src: 'assets/ui/logo.png',
+            alias: 'logo'
+        },
     ]
     
     const animationAssets = [

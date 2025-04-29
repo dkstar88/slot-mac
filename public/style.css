@@ -60,18 +60,16 @@ body {
     }
 }
 
-/* Game title */
-.game-title {
+/* Game logo */
+.game-logo {
     position: absolute;
     top: 10px;
-    left: 0;
-    width: 100%;
-    text-align: center;
-    font-size: 28px;
-    font-weight: bold;
-    color: white;
-    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 80%;
+    height: auto;
     z-index: 10;
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
 }
 
 /* Responsive design */

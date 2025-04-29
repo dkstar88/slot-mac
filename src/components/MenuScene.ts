@@ -33,15 +33,15 @@ export class MenuScene extends PIXI.Container {
 
   private init() {
     // Create title
-    this.title = new PIXI.Text('Fruitful Fortune', {
-      fontFamily: '"Gill Sans", sans-serif',
-      fontSize: 48,
-      fill: 0xFFFFFF,
-      align: 'center'
-    });
-    this.title.anchor.set(0.5);
-    this.title.position.set(this.config.width / 2, 150);
-    this.addChild(this.title);
+    // this.title = new PIXI.Text('Fruitful Fortune', {
+    //   fontFamily: '"Gill Sans", sans-serif',
+    //   fontSize: 48,
+    //   fill: 0xFFFFFF,
+    //   align: 'center'
+    // });
+    // this.title.anchor.set(0.5);
+    // this.title.position.set(this.config.width / 2, 150);
+    // this.addChild(this.title);
 
     // Create buttons
     const buttonWidth = 200;
