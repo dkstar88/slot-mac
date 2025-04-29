@@ -29,7 +29,16 @@ export enum GameEventType {
   // UI events
   SPIN_BUTTON_CLICKED = 'spin_button_clicked',
   CELEBRATION_STARTED = 'celebration_started',
-  CELEBRATION_ENDED = 'celebration_ended'
+  CELEBRATION_ENDED = 'celebration_ended',
+
+  // Menu events
+  MENU_NEW_GAME = 'menu_new_game',
+  MENU_SANDBOX = 'menu_sandbox',
+  MENU_HIGH_SCORES = 'menu_high_scores',
+  MENU_QUIT = 'menu_quit',
+
+  GAMEOVER = 'gameover',
+  GAMEOVER_ENDED = 'gameover_ended',
 }
 
 /**

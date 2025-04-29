@@ -40,7 +40,7 @@ export const MAIN_CONFIG = {
 
     board: {
         x: 0,
-        y: -30,
+        y: 0,
         /** Width of the game board */
         width: 550,
         

@@ -4,10 +4,12 @@ import { GlyphInstance } from './glyphs';
  * Enum representing the different states of the game
  */
 export enum GameStateType {
+  MENU = 'menu',
   IDLE = 'idle',
   SPINNING = 'spinning',
   EVALUATING = 'evaluating',
-  CELEBRATING = 'celebrating'
+  CELEBRATING = 'celebrating',
+  GAMEOVER = 'gameover'
 }
 
 /**
@@ -126,4 +128,10 @@ export interface IGameStateManager {
   
   /** Reset the game state to default */
   resetState(): void;
+  
+  /** Reset the game state to IDLE */
+  resetToIdle(): void;
+  
+  /** Return to the menu */
+  returnToMenu(): void;
 }

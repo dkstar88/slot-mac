@@ -41,13 +41,13 @@ export class GameBackground extends PIXI.Container {
       background.height = this.config.height;
       this.addChild(background);
   
-      const slotFrame = new PIXI.Sprite(PIXI.Assets.get('slots'));
-      slotFrame.position.set(
-        this.config.width/2 - boardWidth/2-4, 
-        this.config.height/2 - boardHeight/2 + MAIN_CONFIG.board.y);
-      slotFrame.width = boardWidth;
-      slotFrame.height = boardHeight;
-      this.addChild(slotFrame);
+      // const slotFrame = new PIXI.Sprite(PIXI.Assets.get('slots'));
+      // slotFrame.position.set(
+      //   this.config.width/2 - boardWidth/2-4, 
+      //   this.config.height/2 - boardHeight/2 + MAIN_CONFIG.board.y);
+      // slotFrame.width = boardWidth;
+      // slotFrame.height = boardHeight;
+      // this.addChild(slotFrame);
     }
 
 }

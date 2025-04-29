@@ -73,6 +73,9 @@ export class GameUI extends PIXI.Container {
   /** Show popup button */
   private showPopupButton!: PIXI.Container;
   
+  /** Menu button */
+  private menuButton!: PIXI.Container;
+  
   /** Coin display */
   private coinDisplay!: Coins;
    
@@ -80,7 +83,7 @@ export class GameUI extends PIXI.Container {
   private messageDisplay!: PIXI.Text;
   
   /** Message popup */
-  private messagePopup!: MessagePopup;
+  public messagePopup!: MessagePopup;
   
   /** Win amount display */
   private winAmountDisplay!: PIXI.Text;
@@ -141,26 +144,22 @@ export class GameUI extends PIXI.Container {
     this.addChild(this.coinDisplay);
        
     // Create message display
-    this.messageDisplay = new PIXI.Text({
-      style: {
-        fontFamily: this.config.fontFamily,
-        fontSize: this.config.valueFontSize,
-        fill: this.config.textColor,
-        align: 'center',
-      }
+    this.messageDisplay = new PIXI.Text('', {
+      fontFamily: this.config.fontFamily,
+      fontSize: this.config.valueFontSize,
+      fill: this.config.textColor,
+      align: 'center',
     }); 
     this.messageDisplay.anchor.set(0.5, 0);
     this.messageDisplay.position.set(this.config.width / 2, 100);
     this.addChild(this.messageDisplay);
     
     // Create win amount display
-    this.winAmountDisplay = new PIXI.Text({
-      style: {
-        fontFamily: this.config.fontFamily,
-        fontSize: this.config.valueFontSize,
-        fill: this.config.textColor,
-        align: 'center',
-      }
+    this.winAmountDisplay = new PIXI.Text('', {
+      fontFamily: this.config.fontFamily,
+      fontSize: this.config.valueFontSize,
+      fill: this.config.textColor,
+      align: 'center',
     }); 
     this.winAmountDisplay.anchor.set(0.5, 0);
     this.winAmountDisplay.position.set(this.config.width / 2, 150);
@@ -199,6 +198,14 @@ export class GameUI extends PIXI.Container {
       20
     );
     this.addChild(this.showPopupButton);
+    
+    // Create menu button
+    this.menuButton = this.createMenuButton();
+    this.menuButton.position.set(
+      this.config.width - 300, 
+      20
+    );
+    this.addChild(this.menuButton);
 
 
     const glyphListContainer = new GlyphValuesBoard({
@@ -263,9 +270,9 @@ export class GameUI extends PIXI.Container {
     this.updateUI();
     
     // Update spin button state
-    this.spinButtons.forEach((spinButton) => {
-      spinButton.updateFromGameState(state.currentState);
-    });
+    // this.spinButtons.forEach((spinButton) => {
+    //   spinButton.updateFromGameState(state.currentState);
+    // });
     
   }
   
@@ -274,6 +281,7 @@ export class GameUI extends PIXI.Container {
    */
   private onSpinButtonClicked(bet: number): void {
     // Check if can spin
+    console.log(this.gameState);
     if (!this.gameState || !this.gameState.canSpin) {
       return;
     }
@@ -498,6 +506,83 @@ export class GameUI extends PIXI.Container {
       onClicked: () => this.onResetButtonClicked()
     })
     return button;
+  }
+  
+  /**
+   * Create a menu button
+   * @returns Menu button container
+   */
+  private createMenuButton(): PIXI.Container {
+    const button = new Button({
+      width: 80,
+      height: 30,
+      text: 'MENU',
+      fontFamily: this.config.fontFamily,
+      fontSize: this.config.labelFontSize,
+      textColor: 0xffffff,
+      color: 0x4CAF50, // Green
+      hoverColor: 0x66BB6A,
+      downColor: 0x388E3C,
+      onClicked: () => this.onMenuButtonClicked()
+    });
+    return button;
+  }
+  
+  /**
+   * Handle menu button clicked event
+   */
+  private onMenuButtonClicked(): void {
+    // Show confirmation popup
+    this.showPopupMessage('Return to main menu?', 0);
+    
+    // Add buttons to the popup
+    const yesButton = new Button({
+      width: 80,
+      height: 30,
+      text: 'Yes',
+      fontFamily: this.config.fontFamily,
+      fontSize: this.config.labelFontSize,
+      textColor: 0xffffff,
+      color: 0x4CAF50, // Green
+      hoverColor: 0x66BB6A,
+      downColor: 0x388E3C,
+      onClicked: () => {
+        // Close popup and return to menu
+        this.messagePopup.close();
+        GameStateManager.returnToMenu();
+      }
+    });
+    
+    const noButton = new Button({
+      width: 80,
+      height: 30,
+      text: 'No',
+      fontFamily: this.config.fontFamily,
+      fontSize: this.config.labelFontSize,
+      textColor: 0xffffff,
+      color: 0xF44336, // Red
+      hoverColor: 0xEF5350,
+      downColor: 0xD32F2F,
+      onClicked: () => {
+        // Just close the popup
+        this.messagePopup.close();
+      }
+    });
+    
+    // Position buttons
+    yesButton.position.set(
+      this.messagePopup.width / 2 - 90,
+      this.messagePopup.height - 50
+    );
+    
+    noButton.position.set(
+      this.messagePopup.width / 2 + 10,
+      this.messagePopup.height - 50
+    );
+    
+    // Add buttons to popup
+    this.messagePopup.addToPopup(yesButton);
+    this.messagePopup.addToPopup(noButton);
   }
   
   /**

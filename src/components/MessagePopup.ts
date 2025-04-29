@@ -64,7 +64,7 @@ export class MessagePopup extends PIXI.Container {
   private overlay: PIXI.Graphics;
   
   /** Popup container */
-  private popup: PIXI.Container;
+  public popup: PIXI.Container;
   
   /** Message text */
   private messageText: PIXI.Text;
@@ -123,15 +123,13 @@ export class MessagePopup extends PIXI.Container {
     this.popup.addChild(background);
     
     // Create message text
-    this.messageText = new PIXI.Text({
-      style: {
-        fontFamily: this.config.fontFamily,
-        fontSize: this.config.fontSize,
-        fill: this.config.textColor,
-        align: 'center',
-        wordWrap: true,
-        wordWrapWidth: this.config.width - (this.config.padding * 2)
-      }
+    this.messageText = new PIXI.Text('', {
+      fontFamily: this.config.fontFamily,
+      fontSize: this.config.fontSize,
+      fill: this.config.textColor,
+      align: 'center',
+      wordWrap: true,
+      wordWrapWidth: this.config.width - (this.config.padding * 2)
     });
     this.messageText.anchor.set(0.5, 0.5);
     this.messageText.position.set(
@@ -178,6 +176,20 @@ export class MessagePopup extends PIXI.Container {
   }
   
   /**
+   * Get the width of the popup
+   */
+  public get width(): number {
+    return this.config.width;
+  }
+  
+  /**
+   * Get the height of the popup
+   */
+  public get height(): number {
+    return this.config.height;
+  }
+  
+  /**
    * Show the popup with a message
    * @param message Message to display
    * @param onClose Callback for when the popup is closed
@@ -193,6 +205,15 @@ export class MessagePopup extends PIXI.Container {
     if (!this.parent) {
       this.app.stage.addChild(this);
     }
+  }
+  
+  /**
+   * Add a child to the popup container
+   * @param child Child to add
+   * @returns The added child
+   */
+  public addToPopup<T extends PIXI.Container>(child: T): T {
+    return this.popup.addChild(child);
   }
   
   /**

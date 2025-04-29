@@ -8,6 +8,9 @@ import { GameStateType } from './types/game-state';
 import { detectWins, calculatePayout } from './core/winning-patterns';
 import { loadAllAssets } from './assets';
 import { GameBackground } from './components/GameBackground';
+import { MenuScene } from './components/MenuScene';
+import { HighScoresScene } from './components/HighScoresScene';
+import { Button } from './components/Button';
 import { MAIN_CONFIG } from './config';
 /**
  * Game configuration
@@ -32,6 +35,8 @@ class FruitfulFortune {
   private gameBoard!: GameBoard;
   private gameUI!: GameUI;
   private gameBackground!: GameBackground;
+  private menuScene!: MenuScene;
+  private highScoresScene!: HighScoresScene;
   // Assets loaded flag
   // private assetsLoaded: boolean = false;
   
@@ -113,16 +118,29 @@ class FruitfulFortune {
    * Initialize the game
    */
   private initGame(): void {
-
-
     this.hideLoadingScreen();
 
-    // Create game UI
+    // Create game background
     this.gameBackground = new GameBackground({
       width: CONFIG.width,
       height: CONFIG.height
     });
     this.app.stage.addChild(this.gameBackground);
+
+    // Create menu scene
+    this.menuScene = new MenuScene({
+      width: CONFIG.width,
+      height: CONFIG.height
+    });
+    this.app.stage.addChild(this.menuScene);
+
+    // Create high scores scene
+    this.highScoresScene = new HighScoresScene({
+      width: CONFIG.width,
+      height: CONFIG.height
+    });
+    this.app.stage.addChild(this.highScoresScene);
+    this.highScoresScene.hide(); // Hide initially
 
     // Create game board
     this.gameBoard = new GameBoard({
@@ -134,8 +152,8 @@ class FruitfulFortune {
       reelSpacing: CONFIG.reelSpacing
     });
     this.gameBoard.position.set(MAIN_CONFIG.board.x, MAIN_CONFIG.board.y);
-    
     this.app.stage.addChild(this.gameBoard);
+    this.gameBoard.visible = false; // Hide initially
     
     // Create game UI
     this.gameUI = new GameUI(this.app, {
@@ -143,22 +161,15 @@ class FruitfulFortune {
       height: CONFIG.height
     });
     this.app.stage.addChild(this.gameUI);
-
-
+    this.gameUI.visible = false; // Hide initially
     
     // Subscribe to events
     this.subscribeToEvents();
     
-    // Add keyboard controls
-    // window.addEventListener('keydown', (e) => {
-    //   if (e.code === 'Space' && GameStateManager.getState().currentState === GameStateType.IDLE) {
-    //     publishEvent(GameEventType.SPIN_BUTTON_CLICKED, {});
-    //   }
-    // });
-    
-    // Show welcome message
-    this.gameUI.showMessage('Welcome to Fruitful Fortune!', 3000);
-    GameStateManager.resetState(); // Reset game state on initialization
+    // Set initial game state to MENU
+    GameStateManager.setState({
+      currentState: GameStateType.MENU
+    });
   }
   
   /**
@@ -174,8 +185,198 @@ class FruitfulFortune {
     eventManager.subscribe(GameEventType.ALL_REELS_STOPPED, (event: any) => {
       this.onAllReelsStopped(event.boardSymbols);
     });
+
+    eventManager.subscribe(GameEventType.GAMEOVER, (event: any) => {
+      this.onGameover(event.balance);
+    });
+
+    // Subscribe to menu events
+    eventManager.subscribe(GameEventType.MENU_NEW_GAME, () => {
+      this.startNewGame();
+    });
+
+    eventManager.subscribe(GameEventType.MENU_SANDBOX, () => {
+      this.startSandboxGame();
+    });
+
+    eventManager.subscribe(GameEventType.MENU_HIGH_SCORES, () => {
+      this.showHighScores();
+    });
+
+    eventManager.subscribe(GameEventType.MENU_QUIT, () => {
+      this.quitGame();
+    });
+
+    // Subscribe to game state changes
+    eventManager.subscribe(GameEventType.GAME_STATE_CHANGED, (event: any) => {
+      this.onGameStateChanged(event.state);
+    });
+  }
+
+  /**
+   * Handle game state changes
+   */
+  private onGameStateChanged(state: any): void {
+    // Update UI based on game state
+    switch (state.currentState) {
+      case GameStateType.MENU:
+        this.menuScene.show();
+        this.highScoresScene.hide();
+        this.gameBoard.visible = false;
+        this.gameUI.visible = false;
+        break;
+      case GameStateType.IDLE:
+      case GameStateType.SPINNING:
+      case GameStateType.EVALUATING:
+      case GameStateType.CELEBRATING:
+        this.menuScene.hide();
+        this.highScoresScene.hide();
+        this.gameBoard.visible = true;
+        this.gameUI.visible = true;
+        break;
+      case GameStateType.GAMEOVER:
+        // Game over state is handled by the onGameover method
+        this.menuScene.hide();
+        this.highScoresScene.hide();
+        this.gameBoard.visible = true;
+        this.gameUI.visible = true;
+        break;
+    }
+  }
+
+  /**
+   * Start a new game with default coins
+   */
+  private startNewGame(): void {
+    GameStateManager.resetState(); // Reset to default state
+    GameStateManager.setState({
+      currentState: GameStateType.IDLE
+    });
+    this.gameUI.showMessage('Welcome to Fruitful Fortune!', 3000);
+  }
+
+  /**
+   * Start a sandbox game with lots of coins
+   */
+  private startSandboxGame(): void {
+    GameStateManager.resetState(); // Reset to default state
+    GameStateManager.setState({
+      currentState: GameStateType.IDLE,
+      playerStats: {
+        ...GameStateManager.getState().playerStats,
+        coins: 99999
+      }
+    });
+    this.gameUI.showMessage('Sandbox Mode: 99999 coins!', 3000);
+  }
+
+  /**
+   * Show high scores screen
+   */
+  private showHighScores(): void {
+    this.menuScene.hide();
+    this.highScoresScene.show();
+  }
+
+  /**
+   * Quit the game
+   */
+  private quitGame(): void {
+    // Save any necessary data
+    GameStateManager.saveState();
+    
+    // Show confirmation message
+    this.gameUI.showMessage('Thanks for playing!', 3000);
+    
+    // In a web context, we can't actually quit the application,
+    // but we can return to the menu
+    setTimeout(() => {
+      GameStateManager.setState({
+        currentState: GameStateType.MENU
+      });
+    }, 3000);
   }
   
+
+  private onGameover(balance: number)
+  {
+    // Get player stats
+    const playerStats = GameStateManager.getState().playerStats;
+    
+    // Calculate total coins spent (totalSpins - totalWins + starting coins - current coins)
+    const startingCoins = MAIN_CONFIG.game.starting_coins;
+    const totalCoinsSpent = playerStats.totalSpins - playerStats.totalWins + startingCoins - playerStats.coins;
+    
+    // Show game over message with player stats
+    const statsMessage = `
+Game Over!
+
+PLAYER STATS:
+Final Score: ${playerStats.coins} coins
+Total Spins: ${playerStats.totalSpins}
+Total Wins: ${playerStats.totalWins}
+Largest Win: ${playerStats.largestWin}
+Total Coins Spent: ${totalCoinsSpent}
+`;
+    
+    this.gameUI.showPopupMessage(statsMessage, 0);
+    
+    // Add buttons to the popup
+    const saveScoreButton = new Button({
+      width: 150,
+      height: 40,
+      text: 'Save Score',
+      fontFamily: '"Gill Sans", sans-serif',
+      fontSize: 18,
+      textColor: 0xFFFFFF,
+      color: 0x4CAF50, // Green
+      hoverColor: 0x66BB6A,
+      downColor: 0x388E3C,
+      onClicked: () => {
+        // Prompt for player name
+        const playerName = prompt('Enter your name:', 'Player') || 'Player';
+        
+        // Save high score
+        this.highScoresScene.addHighScore(playerName, GameStateManager.getState().playerStats.coins);
+        
+        // Close popup and return to menu
+        this.gameUI.messagePopup.close();
+        GameStateManager.returnToMenu();
+      }
+    });
+    
+    const menuButton = new Button({
+      width: 150,
+      height: 40,
+      text: 'Return to Menu',
+      fontFamily: '"Gill Sans", sans-serif',
+      fontSize: 18,
+      textColor: 0xFFFFFF,
+      color: 0xF44336, // Red
+      hoverColor: 0xEF5350,
+      downColor: 0xD32F2F,
+      onClicked: () => {
+        // Close popup and return to menu
+        this.gameUI.messagePopup.close();
+        GameStateManager.returnToMenu();
+      }
+    });
+    
+    // Position buttons
+    saveScoreButton.position.set(
+      this.gameUI.messagePopup.width / 2 - 160,
+      this.gameUI.messagePopup.height - 60
+    );
+    
+    menuButton.position.set(
+      this.gameUI.messagePopup.width / 2 + 10,
+      this.gameUI.messagePopup.height - 60
+    );
+    
+    // Add buttons to popup
+    this.gameUI.messagePopup.addToPopup(saveScoreButton);
+    this.gameUI.messagePopup.addToPopup(menuButton);
+  }
   /**
    * Handle spin button clicked event
    */

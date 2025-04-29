@@ -46,8 +46,10 @@ export class GameStateManagerImpl implements IGameStateManager {
     // Initialize with default state or load from storage
     this.state = this.loadStateFromStorage() || { ...DEFAULT_GAME_STATE };
     console.debug("GameStateManager initialized with state:", this.state);
-    // Always reset to IDLE state on startup
-    this.resetToIdle();
+    // Set initial state to MENU
+    this.setState({
+      currentState: GameStateType.MENU
+    });
   }
   
   /**
@@ -201,6 +203,7 @@ export class GameStateManagerImpl implements IGameStateManager {
   
   canBet(amount: number): boolean
   {
+    console.log('Player can bet: ', this.state.playerStats.coins >= amount)
     return this.state.playerStats.coins >= amount;
   }
 
@@ -233,13 +236,11 @@ export class GameStateManagerImpl implements IGameStateManager {
    * @returns Whether the deduction was successful
    */
   deductCoins(amount: number): boolean {
+
     if (amount <= 0) return true;
     
     // Check if player has enough coins
-    if (this.state.playerStats.coins < amount) {
-      return false;
-    }
-    
+
     const updatedStats: PlayerStats = {
       ...this.state.playerStats,
       coins: this.state.playerStats.coins - amount
@@ -249,11 +250,19 @@ export class GameStateManagerImpl implements IGameStateManager {
       playerStats: updatedStats
     });
     
+   
     // Publish coins deducted event
     publishEvent(GameEventType.COINS_DEDUCTED, {
       amount,
       newBalance: updatedStats.coins
     });
+
+    // Check if player is out of coins
+    if (updatedStats.coins <= 0) {
+      publishEvent(GameEventType.GAMEOVER, {
+        balance: updatedStats.coins
+      });
+    }
     
     return true;
   }
@@ -320,6 +329,16 @@ export class GameStateManagerImpl implements IGameStateManager {
       currentState: GameStateType.IDLE,
       canSpin: true,
       currentSpinResult: null
+    });
+  }
+
+  /**
+   * Return to the menu
+   */
+  returnToMenu(): void {
+    console.log("Returning to menu");
+    this.setState({
+      currentState: GameStateType.MENU
     });
   }
   

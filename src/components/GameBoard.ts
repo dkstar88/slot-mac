@@ -82,6 +82,16 @@ export class GameBoard extends PIXI.Container {
     
     this.config = { ...DEFAULT_CONFIG, ...config };
     
+    const boardWidth = MAIN_CONFIG.board.width + 30;
+    const boardHeight = MAIN_CONFIG.board.height;    
+    const slotFrame = new PIXI.Sprite(PIXI.Assets.get('slots'));
+    slotFrame.position.set(
+      this.config.width/2 - boardWidth/2-4, 
+      this.config.height/2 - boardHeight/2 + MAIN_CONFIG.board.y);
+    slotFrame.width = boardWidth;
+    slotFrame.height = boardHeight;
+    this.addChild(slotFrame);
+            
     // Create container for reels
     this.reelsContainer = new PIXI.Container();
     this.addChild(this.reelsContainer);
@@ -103,6 +113,8 @@ export class GameBoard extends PIXI.Container {
    * Initialize reels
    */
   private initReels(): void {
+
+
     // Clear existing reels
     this.reelsContainer.removeChildren();
     this.reels = [];

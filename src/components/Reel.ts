@@ -169,7 +169,7 @@ export class Reel extends PIXI.Container {
       
       // Position symbol
       symbolContainer.position.y = i * (this.config.glyphSize + this.config.glyphSpacing);
-      symbolContainer.setText('' + i)
+      // symbolContainer.setText('' + i)
       
       // Add to container
       this.glyphsContainer.addChild(symbolContainer);
@@ -352,7 +352,7 @@ export class Reel extends PIXI.Container {
       
       // Position symbol
       symbolContainer.position.y = i * symbolHeight;
-      symbolContainer.setText('' + i)
+      // symbolContainer.setText('' + i)
       // Add to container
       this.glyphsContainer.addChild(symbolContainer);
       
