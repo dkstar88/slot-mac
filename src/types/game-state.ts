@@ -107,6 +107,8 @@ export interface IGameStateManager {
   /** End the current spin and evaluate results */
   endSpin(result: SpinResult): void;
   
+  canBet(amount: number): boolean;
+  
   /** Add coins to the player's balance */
   addCoins(amount: number): void;
   

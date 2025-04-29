@@ -1,5 +1,4 @@
 import * as PIXI from 'pixi.js';
-import { AnimatedSprite } from 'pixi.js';
 import { SpinButton } from './SpinButton';
 import { sound } from '@pixi/sound';
 import { GameEventType } from '../types/events';
@@ -12,6 +11,7 @@ import { Coins } from './Coins'
 import { GlyphValuesBoard } from './GlyphValuesBoard'
 import { CombinationBoard } from './CombinationBoard';
 import { Button } from './Button';
+import * as gold from '../animations/gold';
 
 /**
  * Configuration for the game UI
@@ -95,10 +95,7 @@ export class GameUI extends PIXI.Container {
   private particleContainer!: PIXI.Container;
   
   /** Container for combinations display */
-  private combinationsContainer!: PIXI.Container;
-  
-  /** Gold coin spritesheet */
-  private goldCoinSpritesheet: PIXI.Spritesheet | null = null;
+  private combinationsContainer!: PIXI.Container; 
   
   /** PIXI application instance */
   private app: PIXI.Application;
@@ -353,7 +350,7 @@ export class GameUI extends PIXI.Container {
       });
       
       // If duration is specified, close the popup after the duration
-      if (duration > 0) {
+      if (duration >= 1) {
         this.messageTimeoutId = window.setTimeout(() => {
           this.messagePopup.close();
           this.messageTimeoutId = null;
@@ -481,9 +478,8 @@ export class GameUI extends PIXI.Container {
   /**
    * Handle show popup button clicked event
    */
-  private onShowPopupButtonClicked(): void {
-    console.log("Show popup button clicked");
-    this.showPopupMessage('This is a popup message with a close button!');
+  private onShowPopupButtonClicked(): void {    
+    this.showPopupMessage('Welcome to Fruit Fortune.');
   }
   
   /**
@@ -542,13 +538,7 @@ export class GameUI extends PIXI.Container {
     this.particleContainer.zIndex = 999; // Ensure it's above the background
     layer.attach(this.particleContainer);
     this.addChild(this.particleContainer);
-    
-    // Get the gold coin spritesheet data
-    const goldAnimResource = PIXI.Assets.get('goldAnim');
-    if (goldAnimResource) {
-      // The spritesheet should already be loaded and parsed by PIXI.Assets
-      this.goldCoinSpritesheet = goldAnimResource;
-    }
+
   }
   
   /**
@@ -556,90 +546,12 @@ export class GameUI extends PIXI.Container {
    * @param amount Number of coins to emit
    */
   private emitGoldCoins(amount: number): void {
-    if (!this.goldCoinSpritesheet) return;
+
+    gold.emitGoldCoins(this.config.width / 2, this.config.height / 2,
+      this.config.width, this.config.height,
+      amount, this.particleContainer
+    )
     
-    // Calculate number of coins to emit (cap at a reasonable maximum)
-    const numCoins = Math.min(amount, 50);
-    
-    // Get the center position of the game board
-    const centerX = this.config.width / 2;
-    const centerY = this.config.height / 2;
-    
-    // Create and emit coins
-    for (let i = 0; i < numCoins; i++) {
-      // Create animated sprite from spritesheet
-      const frameNames = [
-        'gold_1.png',
-        'gold_2.png',
-        'gold_3.png',
-        'gold_4.png',
-        'gold_5.png',
-        'gold_6.png'
-      ];
-      
-      // Get textures from the spritesheet
-      const frames = frameNames.map(name => {
-        const texture = PIXI.Texture.from(name);
-        return texture;
-      });
-      
-      const coin = new AnimatedSprite(frames);
-      
-      // Set coin properties
-      coin.anchor.set(0.5);
-      coin.scale.set(0.5 + Math.random() * 0.5); // Random size
-      coin.animationSpeed = 0.2 + Math.random() * 0.1; // Random animation speed
-      coin.loop = true;
-      
-      // Set initial position (slightly randomized around center)
-      coin.position.set(
-        centerX + (Math.random() - 0.5) * 100,
-        centerY + (Math.random() - 0.5) * 100
-      );
-      
-      // Set random velocity
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 2 + Math.random() * 3;
-      const vx = Math.cos(angle) * speed;
-      const vy = Math.sin(angle) * speed - 5; // Initial upward velocity
-      
-      // Add to container
-      this.particleContainer.addChild(coin);
-      
-      // Start animation
-      coin.play();
-      
-      // Create animation
-      const startTime = Date.now();
-      const duration = 1000 + Math.random() * 1000; // Random duration
-      
-      // Use PixiJS ticker for animation
-      const animate = (_: PIXI.Ticker) => {
-        const currentTime = Date.now();
-        const elapsed = currentTime - startTime;
-        const progress = elapsed / duration;
-        
-        // Apply gravity
-        coin.position.x += vx;
-        coin.position.y += vy + progress * 10; // Increasing downward velocity
-        
-        // Spin the coin
-        coin.rotation += 0.1;
-        
-        // If animation is complete or coin is off-screen, remove it
-        if (progress >= 1 || 
-            coin.position.y > this.config.height + 50 ||
-            coin.position.x < -50 ||
-            coin.position.x > this.config.width + 50) {
-          PIXI.Ticker.shared.remove(animate);
-          this.particleContainer.removeChild(coin);
-          coin.destroy();
-        }
-      };
-      
-      // Add to ticker
-      PIXI.Ticker.shared.add(animate);
-    }
   }
   
   /**

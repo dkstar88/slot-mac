@@ -7,14 +7,14 @@ import {
 } from '../types/game-state';
 import { publishEvent } from '../utils/event-system';
 import { GameEventType } from '../types/events';
-
+import { MAIN_CONFIG } from '../config';
 /**
  * Default game state
  */
 const DEFAULT_GAME_STATE: IGameState = {
   currentState: GameStateType.IDLE,
   playerStats: {
-    coins: 100,
+    coins: MAIN_CONFIG.game.starting_coins,
     totalSpins: 0,
     totalWins: 0,
     largestWin: 0
@@ -199,6 +199,11 @@ export class GameStateManagerImpl implements IGameStateManager {
     });
   }
   
+  canBet(amount: number): boolean
+  {
+    return this.state.playerStats.coins >= amount;
+  }
+
   /**
    * Add coins to the player's balance
    * @param amount Amount of coins to add

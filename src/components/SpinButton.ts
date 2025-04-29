@@ -3,6 +3,7 @@ import { GameEventType } from '../types/events';
 import { publishEvent } from '../utils/event-system';
 import { GameStateType } from '../types/game-state';
 import { sound } from '@pixi/sound';
+import { GameStateManager } from '../state/game-state-manager';
 
 /**
  * Configuration for the spin button
@@ -202,10 +203,14 @@ export class SpinButton extends PIXI.Container {
   private onClick(): void {
     console.log("SpinButton clicked");
     
+    if (GameStateManager.getState().playerStats.coins < this.config.bet) {
+      return;
+    }
+
+
     this.disable();
     sound.play("insert", () => {
       // Publish spin button clicked event
-      
       publishEvent(GameEventType.SPIN_BUTTON_CLICKED, {
         bet: this.config.bet
       });

@@ -34,6 +34,10 @@ export const MAIN_CONFIG = {
         spinStopDelay: 0
     },
 
+    game: {
+        starting_coins: 3,
+    },
+
     board: {
         x: 0,
         y: -30,
