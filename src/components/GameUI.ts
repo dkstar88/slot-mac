@@ -80,10 +80,9 @@ export class GameUI extends PIXI.Container {
   private coinDisplay!: Coins;
    
   /** Message display */
+  private messageDisplayContainer!: PIXI.Container;
   private messageDisplay!: PIXI.Text;
-  
-  /** Message popup */
-  public messagePopup!: MessagePopup;
+
   
   /** Win amount display */
   private winAmountDisplay!: PIXI.Text;
@@ -123,8 +122,6 @@ export class GameUI extends PIXI.Container {
     // Initialize combinations display
     this.initCombinationsDisplay();
     
-    // Initialize message popup
-    this.initMessagePopup();
     
     // Subscribe to events
     this.subscribeToEvents();
@@ -143,23 +140,41 @@ export class GameUI extends PIXI.Container {
     this.coinDisplay.position.set(20, 20);
     this.addChild(this.coinDisplay);
        
+    this.messageDisplayContainer = new PIXI.Container();
+    const frame = new PIXI.Graphics().roundRect(
+      0, 0, MAIN_CONFIG.board.width, 100
+    ).fill({
+      color: 0x000000,
+      alpha: 0.2
+    });
+    this.messageDisplayContainer.addChild(frame);
+
     // Create message display
-    this.messageDisplay = new PIXI.Text('', {
-      fontFamily: this.config.fontFamily,
-      fontSize: this.config.valueFontSize,
-      fill: this.config.textColor,
-      align: 'center',
+    this.messageDisplay = new PIXI.Text({
+      text: '',
+      style: {
+        fontFamily: this.config.fontFamily,
+        fontSize: this.config.valueFontSize,
+        fill: this.config.textColor,
+        align: 'center',
+      }
     }); 
-    this.messageDisplay.anchor.set(0.5, 0);
-    this.messageDisplay.position.set(this.config.width / 2, 100);
-    this.addChild(this.messageDisplay);
-    
+    this.messageDisplayContainer.addChild(this.messageDisplay);
+    this.messageDisplay.anchor.set(0.5, 0.5);
+    this.messageDisplay.position.set(this.config.width/2, this.messageDisplayContainer.height/2);    
+    this.messageDisplayContainer.position.set(this.config.width / 2, this.config.height-150);
+    this.addChild(this.messageDisplayContainer);
+
     // Create win amount display
-    this.winAmountDisplay = new PIXI.Text('', {
-      fontFamily: this.config.fontFamily,
-      fontSize: this.config.valueFontSize,
-      fill: this.config.textColor,
-      align: 'center',
+    this.winAmountDisplay = new PIXI.Text({
+      text: '',
+      style: 
+      {
+        fontFamily: this.config.fontFamily,
+        fontSize: this.config.valueFontSize,
+        fill: this.config.textColor,
+        align: 'center',
+      }
     }); 
     this.winAmountDisplay.anchor.set(0.5, 0);
     this.winAmountDisplay.position.set(this.config.width / 2, 150);
@@ -333,14 +348,6 @@ export class GameUI extends PIXI.Container {
   }
   
   /**
-   * Initialize message popup
-   */
-  private initMessagePopup(): void {
-    // Create message popup
-    this.messagePopup = new MessagePopup(this.app);
-  }
-  
-  /**
    * Show a message
    * @param message Message to show
    * @param duration Duration to show the message (ms), 0 for indefinite
@@ -348,22 +355,9 @@ export class GameUI extends PIXI.Container {
    */
   public showMessage(message: string, duration: number = 0, usePopup: boolean = false): void {
     if (usePopup) {
-      // Show message in popup
-      this.messagePopup.show(message, () => {
-        // This callback is called when the popup is closed
-        if (this.messageTimeoutId !== null) {
-          clearTimeout(this.messageTimeoutId);
-          this.messageTimeoutId = null;
-        }
-      });
       
-      // If duration is specified, close the popup after the duration
-      if (duration >= 1) {
-        this.messageTimeoutId = window.setTimeout(() => {
-          this.messagePopup.close();
-          this.messageTimeoutId = null;
-        }, duration);
-      }
+      MessagePopup.Prompt(this.app, message);
+      
     } else {
       // Show message in simple text display (original behavior)
       // Clear any existing timeout
@@ -374,7 +368,12 @@ export class GameUI extends PIXI.Container {
       
       // Set message text
       this.messageDisplay.text = message;
-      this.messageDisplay.visible = true;
+      this.messageDisplay.position.set(this.messageDisplayContainer.width/2, this.messageDisplayContainer.height/2);          
+      this.messageDisplayContainer.position.set(
+        (this.config.width-this.messageDisplayContainer.width)/2,
+        this.config.height-200
+      )
+      this.messageDisplayContainer.visible = true;
       
       // If duration is specified, clear the message after the duration
       if (duration > 0) {
@@ -400,8 +399,7 @@ export class GameUI extends PIXI.Container {
    */
   public clearMessage(): void {
     this.messageDisplay.text = '';
-    this.messageDisplay.visible = false;
-    this.messagePopup.close();
+    this.messageDisplayContainer.visible = false;
   }
   
   /**
@@ -533,56 +531,11 @@ export class GameUI extends PIXI.Container {
    */
   private onMenuButtonClicked(): void {
     // Show confirmation popup
-    this.showPopupMessage('Return to main menu?', 0);
-    
-    // Add buttons to the popup
-    const yesButton = new Button({
-      width: 80,
-      height: 30,
-      text: 'Yes',
-      fontFamily: this.config.fontFamily,
-      fontSize: this.config.labelFontSize,
-      textColor: 0xffffff,
-      color: 0x4CAF50, // Green
-      hoverColor: 0x66BB6A,
-      downColor: 0x388E3C,
-      onClicked: () => {
-        // Close popup and return to menu
-        this.messagePopup.close();
+    MessagePopup.Confirmation(this.app, 
+      'Return to main menu?', () => {
         GameStateManager.returnToMenu();
-      }
-    });
+      });
     
-    const noButton = new Button({
-      width: 80,
-      height: 30,
-      text: 'No',
-      fontFamily: this.config.fontFamily,
-      fontSize: this.config.labelFontSize,
-      textColor: 0xffffff,
-      color: 0xF44336, // Red
-      hoverColor: 0xEF5350,
-      downColor: 0xD32F2F,
-      onClicked: () => {
-        // Just close the popup
-        this.messagePopup.close();
-      }
-    });
-    
-    // Position buttons
-    yesButton.position.set(
-      this.messagePopup.width / 2 - 90,
-      this.messagePopup.height - 50
-    );
-    
-    noButton.position.set(
-      this.messagePopup.width / 2 + 10,
-      this.messagePopup.height - 50
-    );
-    
-    // Add buttons to popup
-    this.messagePopup.addToPopup(yesButton);
-    this.messagePopup.addToPopup(noButton);
   }
   
   /**
@@ -590,7 +543,7 @@ export class GameUI extends PIXI.Container {
    */
   private onResetButtonClicked(): void {
     GameStateManager.resetState();
-    this.showMessage('Game Restart!');
+    this.showMessage('Game Restart!', 1000);
   }
   
   /**
@@ -662,11 +615,6 @@ export class GameUI extends PIXI.Container {
     // Destroy combinations container
     if (this.combinationsContainer) {
       this.combinationsContainer.destroy({ children: true });
-    }
-    
-    // Destroy message popup
-    if (this.messagePopup) {
-      this.messagePopup.destroy();
     }
     
     // Call parent destroy

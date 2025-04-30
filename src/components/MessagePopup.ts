@@ -36,7 +36,8 @@ export interface MessagePopupConfig {
   /** Padding */
   padding: number;
 
-  buttons?: [Partial<ButtonConfig>]
+  buttons?: Partial<ButtonConfig>[];
+  onClose?: (button_pressed?: string) => void;
 }
 
 /**
@@ -63,19 +64,18 @@ export class MessagePopup extends PIXI.Container {
   private config: MessagePopupConfig;
   
   /** Background overlay */
-  private overlay: PIXI.Graphics;
+  private overlay!: PIXI.Graphics;
   
   /** Popup container */
-  public popup: PIXI.Container;
+  public popup!: PIXI.Container;
   
   /** Message text */
-  private messageText: PIXI.Text;
-  
-  /** Callback for when the popup is closed */
-  private onCloseCallback: (() => void) | null = null;
+  private messageText!: PIXI.Text;
   
   /** Reference to the PIXI application */
   private app: PIXI.Application;
+  
+  private buttons: PIXI.Container[] = [];
   
   /**
    * Constructor
@@ -87,6 +87,18 @@ export class MessagePopup extends PIXI.Container {
     this.app = app;
     
     this.config = { ...DEFAULT_CONFIG, ...config };
+    
+    // Hide by default
+    this.visible = false;
+  }
+  
+  /**
+   * Create a close button
+   * @returns Close button container
+   */
+  private createButtons(): PIXI.Container {
+    
+    this.buttons = [];
     if (!this.config.buttons) {
       this.config.buttons = [
         {
@@ -96,6 +108,49 @@ export class MessagePopup extends PIXI.Container {
       ]
     }
 
+    const button_container = new PIXI.Container();
+    var btnX = 0;
+    for (const btn of this.config.buttons) {
+        
+        const button = new Button({...btn, 
+          onClicked: () => {            
+            if (btn.onClicked) btn.onClicked();
+            this.close(btn.text)
+          }});
+        button.position.set(btnX, 0);
+        button_container.addChild(button);
+        btnX += button.width + 10;
+        this.buttons.push(button);
+    }
+    button_container.position.set((this.config.width - button_container.width) / 2, this.config.height-50);
+    this.popup.addChild(button_container);
+
+    return button_container;
+
+  }
+  
+  /**
+   * Get the width of the popup
+   */
+  public get width(): number {
+    return this.config.width;
+  }
+  
+  /**
+   * Get the height of the popup
+   */
+  public get height(): number {
+    return this.config.height;
+  }
+  
+  /**
+   * Show the popup with a message
+   * @param message Message to display
+   * @param onClose Callback for when the popup is closed
+   */
+  public show(message: string, config: Partial<MessagePopupConfig> = {}): void {
+
+    this.config = { ...this.config, ...config };
 
     // Create overlay
     this.overlay = new PIXI.Graphics()
@@ -130,7 +185,7 @@ export class MessagePopup extends PIXI.Container {
     
     // Create message text
     this.messageText = new PIXI.Text({
-      text: '',
+      text: message,
       style: {
         fontFamily: this.config.fontFamily,
         fontSize: this.config.fontSize,
@@ -147,17 +202,7 @@ export class MessagePopup extends PIXI.Container {
     );
     this.popup.addChild(this.messageText);
     
-    const button_container = new PIXI.Container();
-    var btnX = 0;
-    for (const btn of this.config.buttons) {
-        const button = new Button(btn);
-        button.position.set(btnX, 0);
-        button_container.addChild(button);
-        btnX += button.width + 10;
-    }
-    button_container.position.set((this.config.width - button_container.width) / 2, this.config.height-50);
-    this.popup.addChild(button_container);
-
+    this.createButtons();
     
     // Set up interactivity for the overlay
     this.overlay.eventMode = 'static';
@@ -165,53 +210,8 @@ export class MessagePopup extends PIXI.Container {
       // Prevent clicks from passing through
       event.stopPropagation();
     });
-    
-    // Hide by default
-    this.visible = false;
-  }
-  
-  /**
-   * Create a close button
-   * @returns Close button container
-   */
-  private createCloseButton(): PIXI.Container {
-    
-    const button = new Button({
-      text: 'Close',
-      onClicked: () => this.close(),
-    })
-    
-    button.position.set(200, 100);
 
-    
-    return button;
-  }
-  
-  /**
-   * Get the width of the popup
-   */
-  public get width(): number {
-    return this.config.width;
-  }
-  
-  /**
-   * Get the height of the popup
-   */
-  public get height(): number {
-    return this.config.height;
-  }
-  
-  /**
-   * Show the popup with a message
-   * @param message Message to display
-   * @param onClose Callback for when the popup is closed
-   */
-  public show(message: string, onClose?: () => void): void {
-    this.messageText.text = message;
     this.visible = true;
-    
-    // Store callback
-    this.onCloseCallback = onClose || null;
     
     // Add to stage if not already added
     if (!this.parent) {
@@ -220,25 +220,18 @@ export class MessagePopup extends PIXI.Container {
   }
   
   /**
-   * Add a child to the popup container
-   * @param child Child to add
-   * @returns The added child
-   */
-  public addToPopup<T extends PIXI.Container>(child: T): T {
-    return this.popup.addChild(child);
-  }
-  
-  /**
    * Close the popup
    */
-  public close(): void {
+  public close(button_pressed?: string): void {
     this.visible = false;
     
     // Call callback if exists
-    if (this.onCloseCallback) {
-      this.onCloseCallback();
-      this.onCloseCallback = null;
+    if (this.config.onClose) {
+      this.config.onClose(button_pressed);
     }
+
+    this.removeFromParent();
+    this.destroy();    
   }
   
   /**
@@ -246,10 +239,57 @@ export class MessagePopup extends PIXI.Container {
    */
   public destroy(): void {
     // Remove event listeners
-    this.closeButton.removeAllListeners();
+    this.buttons.forEach( (btn) => {
+        btn.removeAllListeners();
+    });
     this.overlay.removeAllListeners();
     
     // Call parent destroy
     super.destroy({ children: true });
   }
+
+  static Prompt(app: PIXI.Application, message: string, onClose?: ()=>void) {
+    const popup = new MessagePopup(app, {
+      buttons: [
+        {
+          text: 'Close',
+          onClicked: () => {
+            // popup.close();
+            if (onClose) onClose();
+          }
+        }
+      ]
+    });
+    popup.show(message);
+  }
+
+  static Confirmation(app: PIXI.Application, message: string, 
+    onYes?: ()=>void, onNo?: ()=>void ) {
+    const popup = new MessagePopup(app, {
+      buttons: [
+        {
+          text: 'Yes',
+          textColor: 0xffffff,
+          color: 0x4CAF50, // Green
+          hoverColor: 0x66BB6A,
+          downColor: 0x388E3C,
+          onClicked: () => {
+            if (onYes) onYes();
+          }
+        },
+        {
+          text: 'No',
+          textColor: 0xffffff,
+          color: 0xF44336, // Red
+          hoverColor: 0xEF5350,
+          downColor: 0xD32F2F,          
+          onClicked: () => {
+            if (onNo) onNo();
+          }
+        },
+      ]
+    });
+    popup.show(message);
+  }
+
 }

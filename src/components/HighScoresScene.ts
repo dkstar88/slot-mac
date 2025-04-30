@@ -2,7 +2,6 @@ import * as PIXI from 'pixi.js';
 import { Button } from './Button';
 import { publishEvent } from '../utils/event-system';
 import { GameEventType } from '../types/events';
-import { MAIN_CONFIG } from '../config';
 
 /**
  * Configuration for the high scores scene
@@ -39,11 +38,14 @@ export class HighScoresScene extends PIXI.Container {
 
   private init() {
     // Create title
-    this.title = new PIXI.Text('High Scores', {
-      fontFamily: '"Gill Sans", sans-serif',
-      fontSize: 48,
-      fill: 0xFFFFFF,
-      align: 'center'
+    this.title = new PIXI.Text({
+      text: 'High Scores',
+      style: {
+        fontFamily: '"Gill Sans", sans-serif',
+        fontSize: 48,
+        fill: 0xFFFFFF,
+        align: 'center'
+      }
     });
     this.title.anchor.set(0.5, 0);
     this.title.position.set(this.config.width / 2, 100);
@@ -122,13 +124,16 @@ export class HighScoresScene extends PIXI.Container {
 
     for (let i = 0; i < maxScores; i++) {
       const score = sortedScores[i];
-      const scoreText = new PIXI.Text(
-        `${i + 1}. ${score.name} - ${score.score}`,
+      const scoreText = new PIXI.Text(        
         {
-          fontFamily: '"Gill Sans", sans-serif',
-          fontSize: 24,
-          fill: 0xFFFFFF,
-          align: 'center'
+          text: `${i + 1}. ${score.name} - ${score.score}`,
+          style:
+          {
+            fontFamily: '"Gill Sans", sans-serif',
+            fontSize: 24,
+            fill: 0xFFFFFF,
+            align: 'center'
+          }
         }
       );
       scoreText.anchor.set(0.5, 0);
@@ -139,11 +144,14 @@ export class HighScoresScene extends PIXI.Container {
 
     // Display message if no scores
     if (sortedScores.length === 0) {
-      const noScoresText = new PIXI.Text('No high scores yet!', {
+      const noScoresText = new PIXI.Text({
+        text: 'No high scores yet!',
+        style: {
         fontFamily: '"Gill Sans", sans-serif',
         fontSize: 24,
         fill: 0xFFFFFF,
         align: 'center'
+      }
       });
       noScoresText.anchor.set(0.5, 0);
       noScoresText.position.set(this.config.width / 2, startY);

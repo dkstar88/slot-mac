@@ -2,7 +2,6 @@ import * as PIXI from 'pixi.js';
 import { Button } from './Button';
 import { publishEvent } from '../utils/event-system';
 import { GameEventType } from '../types/events';
-import { MAIN_CONFIG } from '../config';
 
 /**
  * Configuration for the menu scene
@@ -17,7 +16,6 @@ export interface MenuSceneConfig {
  */
 export class MenuScene extends PIXI.Container {
   private config: MenuSceneConfig;
-  private title!: PIXI.Text;
   private buttons!: {
     newGame: Button;
     sandbox: Button;
@@ -32,16 +30,6 @@ export class MenuScene extends PIXI.Container {
   }
 
   private init() {
-    // Create title
-    // this.title = new PIXI.Text('Fruitful Fortune', {
-    //   fontFamily: '"Gill Sans", sans-serif',
-    //   fontSize: 48,
-    //   fill: 0xFFFFFF,
-    //   align: 'center'
-    // });
-    // this.title.anchor.set(0.5);
-    // this.title.position.set(this.config.width / 2, 150);
-    // this.addChild(this.title);
 
     // Create buttons
     const buttonWidth = 200;

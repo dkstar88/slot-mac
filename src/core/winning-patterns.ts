@@ -188,7 +188,7 @@ export function detectWins(board: GlyphInstance[][]): Win[] {
 
     const symbolValue = Math.floor(symbols.reduce((acc, symbol) => acc + symbol.glyph.payoutValue, 0) / symbols.length);
     const baseValue = symbolValue;
-    const totalValue = Math.floor(symbols.reduce((acc, symbol) => acc + (symbol.glyph.payoutValue * pattern.multiplier), 0));
+    const totalValue = symbolValue * pattern.multiplier;
     return {
       symbols,
       combinationType: pattern.type,

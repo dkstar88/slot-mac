@@ -10,8 +10,8 @@ import { loadAllAssets } from './assets';
 import { GameBackground } from './components/GameBackground';
 import { MenuScene } from './components/MenuScene';
 import { HighScoresScene } from './components/HighScoresScene';
-import { Button } from './components/Button';
 import { MAIN_CONFIG } from './config';
+import { MessagePopup } from './components/MessagePopup';
 /**
  * Game configuration
  */
@@ -294,11 +294,11 @@ class FruitfulFortune {
       GameStateManager.setState({
         currentState: GameStateType.MENU
       });
-    }, 3000);
+    }, 100);
   }
   
 
-  private onGameover(balance: number)
+  private onGameover(_: number)
   {
     // Get player stats
     const playerStats = GameStateManager.getState().playerStats;
@@ -312,70 +312,56 @@ class FruitfulFortune {
 Game Over!
 
 PLAYER STATS:
-Final Score: ${playerStats.coins} coins
 Total Spins: ${playerStats.totalSpins}
 Total Wins: ${playerStats.totalWins}
 Largest Win: ${playerStats.largestWin}
 Total Coins Spent: ${totalCoinsSpent}
 `;
     
-    this.gameUI.showPopupMessage(statsMessage, 0);
-    
-    // Add buttons to the popup
-    const saveScoreButton = new Button({
-      width: 150,
-      height: 40,
-      text: 'Save Score',
-      fontFamily: '"Gill Sans", sans-serif',
-      fontSize: 18,
-      textColor: 0xFFFFFF,
-      color: 0x4CAF50, // Green
-      hoverColor: 0x66BB6A,
-      downColor: 0x388E3C,
-      onClicked: () => {
-        // Prompt for player name
-        const playerName = prompt('Enter your name:', 'Player') || 'Player';
-        
-        // Save high score
-        this.highScoresScene.addHighScore(playerName, GameStateManager.getState().playerStats.coins);
-        
-        // Close popup and return to menu
-        this.gameUI.messagePopup.close();
-        GameStateManager.returnToMenu();
-      }
+    const popup = new MessagePopup(this.app, {
+      fontSize: 12,
+      buttons: [
+        {
+          width: 150,
+          height: 40,
+          text: 'Save Score',
+          fontFamily: '"Gill Sans", sans-serif',
+          fontSize: 18,
+          textColor: 0xFFFFFF,
+          color: 0x4CAF50, // Green
+          hoverColor: 0x66BB6A,
+          downColor: 0x388E3C,
+          onClicked: () => {
+            // Prompt for player name
+            const playerName = prompt('Enter your name:', 'Player') || 'Player';
+            
+            // Save high score
+            this.highScoresScene.addHighScore(playerName, GameStateManager.getState().playerStats.coins);
+            
+            // Close popup and return to menu        
+            GameStateManager.returnToMenu();
+          }
+        },
+        {
+          width: 150,
+          height: 40,
+          text: 'Return to Menu',
+          fontFamily: '"Gill Sans", sans-serif',
+          fontSize: 18,
+          textColor: 0xFFFFFF,
+          color: 0xF44336, // Red
+          hoverColor: 0xEF5350,
+          downColor: 0xD32F2F,
+          onClicked: () => {
+            // Close popup and return to menu        
+            GameStateManager.returnToMenu();
+          }
+        }
+      ]
     });
+
+    popup.show(statsMessage);
     
-    const menuButton = new Button({
-      width: 150,
-      height: 40,
-      text: 'Return to Menu',
-      fontFamily: '"Gill Sans", sans-serif',
-      fontSize: 18,
-      textColor: 0xFFFFFF,
-      color: 0xF44336, // Red
-      hoverColor: 0xEF5350,
-      downColor: 0xD32F2F,
-      onClicked: () => {
-        // Close popup and return to menu
-        this.gameUI.messagePopup.close();
-        GameStateManager.returnToMenu();
-      }
-    });
-    
-    // Position buttons
-    saveScoreButton.position.set(
-      this.gameUI.messagePopup.width / 2 - 160,
-      this.gameUI.messagePopup.height - 60
-    );
-    
-    menuButton.position.set(
-      this.gameUI.messagePopup.width / 2 + 10,
-      this.gameUI.messagePopup.height - 60
-    );
-    
-    // Add buttons to popup
-    this.gameUI.messagePopup.addToPopup(saveScoreButton);
-    this.gameUI.messagePopup.addToPopup(menuButton);
   }
   /**
    * Handle spin button clicked event

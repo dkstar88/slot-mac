@@ -1,4 +1,4 @@
-import { Container, Texture, Ticker, Spritesheet, AnimatedSprite, Assets } from "pixi.js";
+import { Container, Texture, Ticker, AnimatedSprite } from "pixi.js";
 
 
 class _ParticleEmitter {

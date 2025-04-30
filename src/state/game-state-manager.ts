@@ -189,10 +189,17 @@ export class GameStateManagerImpl implements IGameStateManager {
         currentState: GameStateType.IDLE,
         canSpin: true
       });
-      
+
       // Add to recent spins
       const recentSpins = [result, ...this.state.recentSpins].slice(0, MAX_RECENT_SPINS);
       this.setState({ recentSpins });
+
+      // Check if player is out of coins
+      if (this.state.playerStats.coins <= 0) {
+        publishEvent(GameEventType.GAMEOVER, {
+          balance: this.state.playerStats.coins
+        });
+      }            
     }
     
     // Publish spin ended event
@@ -256,13 +263,6 @@ export class GameStateManagerImpl implements IGameStateManager {
       amount,
       newBalance: updatedStats.coins
     });
-
-    // Check if player is out of coins
-    if (updatedStats.coins <= 0) {
-      publishEvent(GameEventType.GAMEOVER, {
-        balance: updatedStats.coins
-      });
-    }
     
     return true;
   }
