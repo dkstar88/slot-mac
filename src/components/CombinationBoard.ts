@@ -1,8 +1,6 @@
 import * as PIXI from "pixi.js";
 import { GlyphType } from "../types/glyphs";
-import {  
-  WinningPatternsManager,
-} from "../core/winning-patterns";
+import { WinningPatternsManager } from "../core/winning-patterns";
 import { CombinationIcon } from "./CombinationIcon";
 /**
  * Configuration for the combination icon
@@ -38,11 +36,10 @@ export class CombinationBoard extends PIXI.Container {
     // Add title
 
     const background = new PIXI.Graphics()
-        .roundRect(0, 0, this.config.width, this.config.height, 5)
-        .fill({ color: this.config.color, alpha: 0.6 });
+      .roundRect(0, 0, this.config.width, this.config.height, 5)
+      .fill({ color: this.config.color, alpha: 0.6 });
     this.addChild(background);
-        
-        
+
     const title = new PIXI.Text({
       text: "Winning Patterns",
       style: {
@@ -108,7 +105,7 @@ export class CombinationBoard extends PIXI.Container {
       } as PIXI.TextOptions);
       multiplierText.position.set(
         combinationIcon.width + spacing,
-        nameText.y + nameText.height
+        nameText.y + nameText.height,
       );
       patternContainer.addChild(multiplierText);
 
@@ -119,7 +116,7 @@ export class CombinationBoard extends PIXI.Container {
       yOffset +=
         Math.max(
           combinationIcon.height,
-          nameText.height + multiplierText.height + 5
+          nameText.height + multiplierText.height + 5,
         ) + spacing;
     });
   }

@@ -1,12 +1,14 @@
-import { EventSystem, GameEvent, GameEventType } from '../types/events';
+import { EventSystem, GameEvent, GameEventType } from "../types/events";
+import logger from "./logger";
 
 /**
  * Implementation of the event system for game-wide communication
  */
 export class EventManager implements EventSystem {
   // Map of event types to arrays of callback functions
-  private listeners: Map<GameEventType, Array<(event: GameEvent) => void>> = new Map();
-  
+  private listeners: Map<GameEventType, Array<(event: GameEvent) => void>> =
+    new Map();
+
   /**
    * Subscribe to an event
    * @param eventType Type of event to subscribe to
@@ -15,17 +17,17 @@ export class EventManager implements EventSystem {
    */
   subscribe<T extends GameEvent>(
     eventType: GameEventType,
-    callback: (event: T) => void
+    callback: (event: T) => void,
   ): () => void {
     // Get or create the array of listeners for this event type
     if (!this.listeners.has(eventType)) {
       this.listeners.set(eventType, []);
     }
-    
+
     // Add the callback to the listeners
     const callbacks = this.listeners.get(eventType)!;
     callbacks.push(callback as (event: GameEvent) => void);
-    
+
     // Return an unsubscribe function
     return () => {
       const index = callbacks.indexOf(callback as (event: GameEvent) => void);
@@ -34,7 +36,7 @@ export class EventManager implements EventSystem {
       }
     };
   }
-  
+
   /**
    * Publish an event
    * @param event The event to publish
@@ -44,25 +46,25 @@ export class EventManager implements EventSystem {
     if (!event.timestamp) {
       (event as GameEvent).timestamp = Date.now();
     }
-    
+
     // Get the listeners for this event type
     const callbacks = this.listeners.get(event.type);
-    
+
     // If there are no listeners, return
     if (!callbacks || callbacks.length === 0) {
       return;
     }
-    
+
     // Call all listeners with the event
-    callbacks.forEach(callback => {
+    callbacks.forEach((callback) => {
       try {
         callback(event);
       } catch (error) {
-        console.error(`Error in event listener for ${event.type}:`, error);
+        logger.error(`Error in event listener for ${event.type}:`, error);
       }
     });
   }
-  
+
   /**
    * Unsubscribe all listeners for a specific event type
    * @param eventType Type of event to unsubscribe from
@@ -70,7 +72,7 @@ export class EventManager implements EventSystem {
   unsubscribeAll(eventType: GameEventType): void {
     this.listeners.delete(eventType);
   }
-  
+
   /**
    * Clear all event listeners
    */
@@ -89,13 +91,13 @@ export const eventManager = new EventManager();
  */
 export function publishEvent<T extends GameEvent>(
   eventType: GameEventType,
-  eventData: Omit<T, 'type' | 'timestamp'>
+  eventData: Omit<T, "type" | "timestamp">,
 ): void {
   const event = {
     type: eventType,
     timestamp: Date.now(),
-    ...eventData
+    ...eventData,
   } as T;
-  console.log("Publishing event:", event);
+  logger.debug("Publishing event:", event);
   eventManager.publish(event);
 }

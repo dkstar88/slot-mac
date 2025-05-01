@@ -1,13 +1,14 @@
-import { 
-  IGameState, 
-  IGameStateManager, 
-  GameStateType, 
-  PlayerStats, 
-  SpinResult 
-} from '../types/game-state';
-import { publishEvent } from '../utils/event-system';
-import { GameEventType } from '../types/events';
-import { MAIN_CONFIG } from '../config';
+import {
+  IGameState,
+  IGameStateManager,
+  GameStateType,
+  PlayerStats,
+  SpinResult,
+} from "../types/game-state";
+import { publishEvent } from "../utils/event-system";
+import { GameEventType } from "../types/events";
+import { MAIN_CONFIG } from "../config";
+import logger from "../utils/logger";
 /**
  * Default game state
  */
@@ -17,14 +18,14 @@ const DEFAULT_GAME_STATE: IGameState = {
     coins: MAIN_CONFIG.game.starting_coins,
     totalSpins: 0,
     totalWins: 0,
-    largestWin: 0
+    largestWin: 0,
   },
   currentMultiplier: 1,
   currentSpinResult: null,
   canSpin: true,
   recentSpins: [],
   baseWinRate: 30,
-  luck: 0
+  luck: 0,
 };
 
 /**
@@ -38,20 +39,20 @@ const MAX_RECENT_SPINS = 10;
 export class GameStateManagerImpl implements IGameStateManager {
   // Current game state
   private state: IGameState;
-  
+
   /**
    * Constructor
    */
   constructor() {
     // Initialize with default state or load from storage
     this.state = this.loadStateFromStorage() || { ...DEFAULT_GAME_STATE };
-    console.debug("GameStateManager initialized with state:", this.state);
+    logger.debug("GameStateManager initialized with state:", this.state);
     // Set initial state to MENU
     this.setState({
-      currentState: GameStateType.MENU
+      currentState: GameStateType.MENU,
     });
   }
-  
+
   /**
    * Get the current game state
    * @returns Current game state
@@ -59,7 +60,7 @@ export class GameStateManagerImpl implements IGameStateManager {
   getState(): IGameState {
     return { ...this.state };
   }
-  
+
   /**
    * Update the game state
    * @param newState Partial state to update
@@ -68,18 +69,18 @@ export class GameStateManagerImpl implements IGameStateManager {
     // Update the state
     this.state = {
       ...this.state,
-      ...newState
+      ...newState,
     };
-    
+
     // Publish state changed event
     publishEvent(GameEventType.GAME_STATE_CHANGED, {
-      state: this.getState()
+      state: this.getState(),
     });
-    
+
     // Save state to storage
     this.saveStateToStorage();
   }
-  
+
   /**
    * Start a new spin
    */
@@ -88,37 +89,37 @@ export class GameStateManagerImpl implements IGameStateManager {
     if (!this.state.canSpin || this.state.currentState !== GameStateType.IDLE) {
       return;
     }
-    
+
     // Check if has enough coins
     if (this.state.playerStats.coins < bet) {
       return;
     }
-    
+
     // Deduct coin
     this.deductCoins(bet);
     this.updateMultiplier(bet);
-    
+
     // Update player stats
     const updatedStats: PlayerStats = {
       ...this.state.playerStats,
-      totalSpins: this.state.playerStats.totalSpins + 1
+      totalSpins: this.state.playerStats.totalSpins + 1,
     };
-    
+
     // Update state
     this.setState({
       currentState: GameStateType.SPINNING,
       playerStats: updatedStats,
       canSpin: false,
-      currentSpinResult: null
+      currentSpinResult: null,
     });
-    
+
     // Publish spin started event
     publishEvent(GameEventType.SPIN_STARTED, {
       currentCoins: this.state.playerStats.coins,
-      spinCost: bet
+      spinCost: bet,
     });
   }
-  
+
   /**
    * End the current spin and evaluate results
    * @param result Spin result
@@ -128,58 +129,64 @@ export class GameStateManagerImpl implements IGameStateManager {
     if (this.state.currentState !== GameStateType.SPINNING) {
       return;
     }
-    
+
     // Update state to evaluating
     this.setState({
       currentState: GameStateType.EVALUATING,
-      currentSpinResult: result
+      currentSpinResult: result,
     });
-    
+
     // Process wins
     if (result.wins.length > 0) {
       // Add coins
       this.addCoins(result.totalPayout);
-      
+
       // Update player stats
       const updatedStats: PlayerStats = {
         ...this.state.playerStats,
         totalWins: this.state.playerStats.totalWins + 1,
-        largestWin: Math.max(this.state.playerStats.largestWin, result.totalPayout)
+        largestWin: Math.max(
+          this.state.playerStats.largestWin,
+          result.totalPayout,
+        ),
       };
-      
+
       // Update state
       this.setState({
         playerStats: updatedStats,
-        currentState: GameStateType.CELEBRATING
+        currentState: GameStateType.CELEBRATING,
       });
-      
+
       // Publish wins evaluated event
       publishEvent(GameEventType.WINS_EVALUATED, {
-        wins: result.wins.map(win => ({
-          pattern: { type: win.combinationType } as any,
-          symbols: win.symbols
+        wins: result.wins.map((win) => ({
+          pattern: { type: win.combinationType },
+          symbols: win.symbols,
         })),
-        isJackpot: result.isJackpot
+        isJackpot: result.isJackpot,
       });
-      
+
       // Publish payout calculated event
       publishEvent(GameEventType.PAYOUT_CALCULATED, {
         amount: result.totalPayout,
         multiplier: this.state.currentMultiplier,
-        newMultiplier: null // This would be calculated based on win type
+        newMultiplier: null, // This would be calculated based on win type
       });
-      
+
       // Add to recent spins
-      const recentSpins = [result, ...this.state.recentSpins].slice(0, MAX_RECENT_SPINS);
+      const recentSpins = [result, ...this.state.recentSpins].slice(
+        0,
+        MAX_RECENT_SPINS,
+      );
       this.setState({ recentSpins });
-      
+
       // After a delay, return to idle state
       setTimeout(() => {
         this.setState({
           currentState: GameStateType.IDLE,
-          canSpin: true
+          canSpin: true,
         });
-        
+
         // Publish celebration ended event
         publishEvent(GameEventType.CELEBRATION_ENDED, {});
       }, 3000); // 3 second celebration
@@ -187,30 +194,32 @@ export class GameStateManagerImpl implements IGameStateManager {
       // No wins, return to idle state
       this.setState({
         currentState: GameStateType.IDLE,
-        canSpin: true
+        canSpin: true,
       });
 
       // Add to recent spins
-      const recentSpins = [result, ...this.state.recentSpins].slice(0, MAX_RECENT_SPINS);
+      const recentSpins = [result, ...this.state.recentSpins].slice(
+        0,
+        MAX_RECENT_SPINS,
+      );
       this.setState({ recentSpins });
 
       // Check if player is out of coins
       if (this.state.playerStats.coins <= 0) {
         publishEvent(GameEventType.GAMEOVER, {
-          balance: this.state.playerStats.coins
+          balance: this.state.playerStats.coins,
         });
-      }            
+      }
     }
-    
+
     // Publish spin ended event
     publishEvent(GameEventType.SPIN_ENDED, {
-      result
+      result,
     });
   }
-  
-  canBet(amount: number): boolean
-  {
-    console.log('Player can bet: ', this.state.playerStats.coins >= amount)
+
+  canBet(amount: number): boolean {
+    logger.debug("Player can bet: ", this.state.playerStats.coins >= amount);
     return this.state.playerStats.coins >= amount;
   }
 
@@ -220,115 +229,113 @@ export class GameStateManagerImpl implements IGameStateManager {
    */
   addCoins(amount: number): void {
     if (amount <= 0) return;
-    console.info("Adding coins:", amount);
+    logger.info("Adding coins:", amount);
     const updatedStats: PlayerStats = {
       ...this.state.playerStats,
-      coins: this.state.playerStats.coins + amount
+      coins: this.state.playerStats.coins + amount,
     };
-    
+
     this.setState({
-      playerStats: updatedStats
+      playerStats: updatedStats,
     });
-    
+
     // Publish coins added event
     publishEvent(GameEventType.COINS_ADDED, {
       amount,
-      newBalance: updatedStats.coins
+      newBalance: updatedStats.coins,
     });
   }
-  
+
   /**
    * Deduct coins from the player's balance
    * @param amount Amount of coins to deduct
    * @returns Whether the deduction was successful
    */
   deductCoins(amount: number): boolean {
-
     if (amount <= 0) return true;
-    
+
     // Check if player has enough coins
 
     const updatedStats: PlayerStats = {
       ...this.state.playerStats,
-      coins: this.state.playerStats.coins - amount
+      coins: this.state.playerStats.coins - amount,
     };
-    
+
     this.setState({
-      playerStats: updatedStats
+      playerStats: updatedStats,
     });
-    
-   
+
     // Publish coins deducted event
     publishEvent(GameEventType.COINS_DEDUCTED, {
       amount,
-      newBalance: updatedStats.coins
+      newBalance: updatedStats.coins,
     });
-    
+
     return true;
   }
-  
+
   /**
    * Update the multiplier
    * @param newMultiplier New multiplier value
    */
   updateMultiplier(newMultiplier: number): void {
     if (newMultiplier <= 0) return;
-    
+
     this.setState({
-      currentMultiplier: newMultiplier
+      currentMultiplier: newMultiplier,
     });
-    
+
     // Publish multiplier changed event
     publishEvent(GameEventType.MULTIPLIER_CHANGED, {
       oldMultiplier: this.state.currentMultiplier,
-      newMultiplier
+      newMultiplier,
     });
   }
-  
+
   /**
    * Save the current game state to localStorage
    */
   saveState(): void {
     this.saveStateToStorage();
   }
-  
+
   /**
    * Load a saved game state from localStorage
    * @returns Whether the load was successful
    */
   loadState(): boolean {
     const savedState = this.loadStateFromStorage();
-    
+
     if (savedState) {
       this.state = savedState;
       return true;
     }
-    
+
     return false;
   }
-  
+
   /**
    * Reset the game state to default
    */
   resetState(): void {
     this.state = { ...DEFAULT_GAME_STATE };
-    localStorage.removeItem('fruitfulFortune_gameState');
-    
+    localStorage.removeItem("fruitfulFortune_gameState");
+
     // Publish game state changed event
     publishEvent(GameEventType.GAME_STATE_CHANGED, {
-      state: this.getState()
+      state: this.getState(),
     });
   }
-  
+
   /**
    * Reset the game state to IDLE
    */
   resetToIdle(): void {
-    console.log("Resetting game state to IDLE");
+    logger.debug("Resetting game state to IDLE");
     this.setState({
       currentState: GameStateType.IDLE,
       canSpin: true,
-      currentSpinResult: null
+      currentSpinResult: null,
     });
   }
 
@@ -336,24 +343,27 @@ export class GameStateManagerImpl implements IGameStateManager {
    * Return to the menu
    */
   returnToMenu(): void {
-    console.log("Returning to menu");
+    logger.debug("Returning to menu");
     this.setState({
-      currentState: GameStateType.MENU
+      currentState: GameStateType.MENU,
     });
   }
-  
+
   /**
    * Save the current game state to localStorage
    * @private
    */
   private saveStateToStorage(): void {
     try {
-      localStorage.setItem('fruitfulFortune_gameState', JSON.stringify(this.state));
+      localStorage.setItem(
+        "fruitfulFortune_gameState",
+        JSON.stringify(this.state),
+      );
     } catch (error) {
-      console.error('Failed to save game state to localStorage:', error);
+      logger.error("Failed to save game state to localStorage:", error);
     }
   }
-  
+
   /**
    * Load the game state from localStorage
    * @private
@@ -361,15 +371,15 @@ export class GameStateManagerImpl implements IGameStateManager {
    */
   private loadStateFromStorage(): IGameState | null {
     try {
-      const savedState = localStorage.getItem('fruitfulFortune_gameState');
-      
+      const savedState = localStorage.getItem("fruitfulFortune_gameState");
+
       if (savedState) {
         return JSON.parse(savedState) as IGameState;
       }
     } catch (error) {
-      console.error('Failed to load game state from localStorage:', error);
+      logger.error("Failed to load game state from localStorage:", error);
     }
-    
+
     return null;
   }
 }

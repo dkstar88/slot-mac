@@ -1,4 +1,3 @@
-
 /* 
     Game Progression Stages 
 
@@ -7,10 +6,8 @@
 
 
 */
-export const GameStage = {
-
-}
+export const GameStage = {};
 
 export const GetGameStageCoins = (stage: number): number => {
-    return Math.E ^ stage;
-}
+  return Math.E ^ stage;
+};

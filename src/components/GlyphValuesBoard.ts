@@ -1,73 +1,108 @@
-import * as PIXI from 'pixi.js';
-import { GLYPHS_ARRAY, GlyphManager } from '../core/glyphs';
+import { GLYPHS_ARRAY, GlyphManager } from "../core/glyphs";
+import {
+  GridContainer,
+  GridConfig,
+  GridContainerConfig,
+} from "./GridContainer";
 
 /**
- * Configuration for the combination icon
+ * Default grid configuration for the glyph values board
  */
-export interface GlyphValuesBoardConfig {
-  width: number;
-  height: number;
-  color: number;
-  textColor: number;
-  fontFamily: string;
-  fontSize: number;
-}
-
-const DEFAULT_CONFIG: GlyphValuesBoardConfig = {
-    width: 100,
-    height: 30,
-    color: 0xFF0000,
-    textColor: 0xFFFFFF,
-    fontFamily: '"Gill Sans", sans-serif',
-    fontSize: 14,    
+const GLYPH_VALUES_GRID_CONFIG: GridConfig = {
+  cellBorderColor: 0xffffff,
+  cellBorderWidth: 1,
+  cellPadding: 5,
+  columnWidths: [50, 50, 80],
+  headerHeight: 30,
+  rowHeight: 30,
+  rows: GLYPHS_ARRAY.length,
+  columns: 3,
 };
 
-export class GlyphValuesBoard extends PIXI.Container {
+/**
+ * A component that displays glyph values in a grid format
+ */
+export class GlyphValuesBoard extends GridContainer {
+  /**
+   * Constructor
+   * @param config Configuration for the glyph values board
+   */
+  constructor(config: Partial<GridContainerConfig> = {}) {
+    // Set default grid configuration specific to glyph values
+    const glyphValuesConfig: Partial<GridContainerConfig> = {
+      ...config,
+      gridConfig: {
+        ...GLYPH_VALUES_GRID_CONFIG,
+        ...config.gridConfig,
+      },
+    };
 
-    private config: GlyphValuesBoardConfig;
+    super(glyphValuesConfig);
 
-    constructor(config: Partial<GlyphValuesBoardConfig> = {}) {
-        super()
-        this.config = { ...DEFAULT_CONFIG, ...config };
-        this.init()
-    }
+    // Draw the grid with glyph values
+    this.drawGlyphValuesGrid();
+  }
 
-    private init() {
+  /**
+   * Draw the grid with glyph values
+   */
+  private drawGlyphValuesGrid(): void {
+    // Clear the grid
+    this.clearGrid();
 
-        const background = new PIXI.Graphics()
-            .roundRect(0, 0, this.config.width, this.config.height, 5)
-            .fill({ color: this.config.color, alpha: 0.6 });
-        this.addChild(background);
-        
-        // Add title
-        const title = new PIXI.Text({
-            text: 'Values',
-            style: {
-            fontFamily: this.config.fontFamily,
-            fontSize: this.config.fontSize,
-            fill: this.config.textColor,
-            fontWeight: 'bold'
-            }
-        } as PIXI.TextOptions);
-        this.addChild(title);
-        
-        // Create grid of symbols
-        GLYPHS_ARRAY.forEach((symbol, index) => {
-            const yPos = 30 + (index * 35);
-                
-            // Create value text
-            const valueText = new PIXI.Text({
-            text: `${symbol.emoji}  ${symbol.payoutValue}   ` + GlyphManager.getGlyphWeightPercentage(symbol.type).toFixed(2) + '%',
-            style: {
-                fontFamily: this.config.fontFamily,
-                fontSize: this.config.fontSize,
-                fill: this.config.textColor
-            }
-            } as PIXI.TextOptions);
-            valueText.position.set(1, yPos);
-            this.addChild(valueText);
-        });
-            
-    }
+    // Draw header row
+    // this.drawHeaderRow(['Symbol', 'Value', 'Weight %']);
 
+    // Draw data rows
+    this.drawGlyphRows();
+  }
+
+  /**
+   * Draw the glyph data rows
+   */
+  private drawGlyphRows(): void {
+    // Draw data rows
+    GLYPHS_ARRAY.forEach((symbol, index) => {
+      // Row index is index + 1 (since row 0 is the header)
+      const rowIndex = index;
+
+      // Column 1: Symbol emoji
+      this.addCellText(symbol.emoji, rowIndex, 0);
+
+      // Column 2: Payout value
+      this.addCellText(symbol.payoutValue.toString(), rowIndex, 1);
+
+      // Column 3: Weight percentage
+      this.addCellText(
+        GlyphManager.getGlyphWeightPercentage(symbol.type).toFixed(2) + "%",
+        rowIndex,
+        2,
+      );
+    });
+  }
+
+  /**
+   * Update the grid configuration and redraw the grid
+   * @param gridConfig New grid configuration
+   */
+  public override updateGridConfig(gridConfig: Partial<GridConfig>): void {
+    // Call the parent method to update the configuration
+    super.updateGridConfig(gridConfig);
+
+    // Redraw the grid with the new configuration
+    this.drawGlyphValuesGrid();
+  }
+
+  /**
+   * Resize the container
+   * @param width New width
+   * @param height New height
+   */
+  public override resize(width: number, height: number): void {
+    // Call the parent method to resize the container
+    super.resize(width, height);
+
+    // Redraw the grid with the new size
+    this.drawGlyphValuesGrid();
+  }
 }

@@ -1,4 +1,4 @@
-import { Ticker } from 'pixi.js';
+import { Ticker } from "pixi.js";
 
 export interface TweenObject {
   object: any;
@@ -28,15 +28,15 @@ export class TweenManager {
    * @param onchange Callback on change
    * @param oncomplete Callback on complete
    */
-  public tween(object: any, 
-    time: number, 
-    property: string, 
+  public tween(
+    object: any,
+    time: number,
+    property: string,
     target: number,
     start: number = 0,
     easing: (t: number) => number = this.backout(0.8),
     change?: ((tween: TweenObject) => void) | undefined,
     complete?: ((tween: TweenObject) => void) | undefined,
-  
   ): void {
     const params: TweenObject = {
       object,
@@ -48,7 +48,7 @@ export class TweenManager {
       easing,
       change: change,
       complete: complete,
-    }
+    };
     this.tweenings.push(params);
   }
 
@@ -73,7 +73,7 @@ export class TweenManager {
       t.object[t.property] = this.lerp(
         t.propertyBeginValue,
         t.target,
-        t.easing(phase)
+        t.easing(phase),
       );
 
       if (t.change) t.change(t);
